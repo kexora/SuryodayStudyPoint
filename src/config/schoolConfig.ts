@@ -22,7 +22,7 @@ export const schoolConfig = {
     state: "Uttar Pradesh",
     country: "India",
     pincode: "274702",
-    fullAddress: "Suryoday Study Point, Bhawani Chhapar Bajar (Near Sirisiya Babu Road), Deoria, Uttar Pradesh - 274702",
+    fullAddress: "Bhawani Chhapar Bajar, Deoria, Uttar Pradesh - 274702",
     campusName: "Bhawani Chhapar Campus & Digital Learning Center",
   },
 

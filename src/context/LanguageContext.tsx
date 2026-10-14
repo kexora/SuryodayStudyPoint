@@ -168,7 +168,45 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Language Toggle Label
     'lang.current': 'English',
-    'lang.switch': 'हिंदी में देखें'
+    'lang.switch': 'हिंदी में देखें',
+
+    // Auth & Login
+    'auth.login_title': 'User & Student Login',
+    'auth.login_subtitle': 'Access Suryoday Study Point Student Portal, Live Classes & Notes',
+    'auth.login_id_label': 'Mobile Number / Email / Student ID',
+    'auth.login_id_placeholder': 'Enter 10-digit Mobile or Email ID',
+    'auth.password_label': 'Password',
+    'auth.password_placeholder': 'Enter your password',
+    'auth.remember_me': 'Remember Me',
+    'auth.forgot_password': 'Lost Password?',
+    'auth.btn_sign_in': 'Sign In to Portal',
+    'auth.authenticating': 'Authenticating...',
+    'auth.no_account': "Don't have a student account?",
+    'auth.btn_create_account': 'Create New Student Account',
+    'auth.reg_title': 'New Student Registration',
+    'auth.reg_subtitle': 'Create your personal Suryoday Study Point ID',
+    'auth.reg_student_info': 'Student Details',
+    'auth.full_name': 'Student Full Name',
+    'auth.full_name_placeholder': 'e.g. Rahul Kumar',
+    'auth.select_course': 'Course / Stream Category',
+    'auth.course_academic': 'School Academic (Class 6th to 12th)',
+    'auth.course_competition': 'Suryoday Competition Classes (SSC/Police/Railway)',
+    'auth.course_computer': 'Suryoday Computer Classes (CCC/ADCA/Tally)',
+    'auth.mobile_number': 'Mobile Number (10 Digits)',
+    'auth.mobile_placeholder': 'e.g. 9876543210',
+    'auth.email_address': 'Email Address',
+    'auth.email_placeholder': 'e.g. student@example.com',
+    'auth.create_password': 'Create Password',
+    'auth.password_min_placeholder': 'Min. 6 characters',
+    'auth.btn_register': 'Register Student Account',
+    'auth.creating_account': 'Creating Student Account...',
+    'auth.btn_back_login': 'Back to Sign In',
+    'auth.reset_title': 'Reset Password',
+    'auth.reset_sub': 'Enter your registered email address and we will send you a reset link.',
+    'auth.reset_email_label': 'Email Address',
+    'auth.reset_email_placeholder': 'Enter email address',
+    'auth.cancel': 'Cancel',
+    'auth.send_reset_link': 'Send Reset Link'
   },
   hi: {
     // Nav & Common
@@ -327,7 +365,45 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Language Toggle Label
     'lang.current': 'हिंदी',
-    'lang.switch': 'Switch to English'
+    'lang.switch': 'Switch to English',
+
+    // Auth & Login
+    'auth.login_title': 'छात्र एवं यूजर लॉगिन',
+    'auth.login_subtitle': 'सूर्योदय स्टडी पॉइंट छात्र पोर्टल, लाइव क्लास एवं स्टडी नोट्स हेतु लॉगिन करें',
+    'auth.login_id_label': 'मोबाइल नंबर / ईमेल / छात्र आईडी',
+    'auth.login_id_placeholder': '10-अंकों का मोबाइल नंबर या ईमेल आईडी दर्ज करें',
+    'auth.password_label': 'पासवर्ड',
+    'auth.password_placeholder': 'अपना पासवर्ड दर्ज करें',
+    'auth.remember_me': 'मुझे याद रखें',
+    'auth.forgot_password': 'पासवर्ड भूल गए?',
+    'auth.btn_sign_in': 'पोर्टल में लॉगिन करें',
+    'auth.authenticating': 'प्रमाणित हो रहा है...',
+    'auth.no_account': 'क्या आपका छात्र खाता नहीं बना है?',
+    'auth.btn_create_account': 'नया छात्र खाता बनाएं',
+    'auth.reg_title': 'नया छात्र पंजीयन',
+    'auth.reg_subtitle': 'अपनी व्यक्तिगत सूर्योदय स्टडी पॉइंट स्टूडेंट आईडी बनाएं',
+    'auth.reg_student_info': 'छात्र / अभ्यर्थी विवरण',
+    'auth.full_name': 'छात्र का पूरा नाम',
+    'auth.full_name_placeholder': 'उदा. राहुल कुमार',
+    'auth.select_course': 'कोर्स / वर्ग का चयन करें',
+    'auth.course_academic': 'स्कूली शिक्षा (कक्षा 6वीं से 12वीं)',
+    'auth.course_competition': 'सूर्योदय कॉम्पिटिशन क्लासेस (SSC/पुलिस/रेलवे)',
+    'auth.course_computer': 'सूर्योदय कंप्यूटर क्लासेस (CCC/ADCA/Tally)',
+    'auth.mobile_number': 'मोबाइल नंबर (10 अंक)',
+    'auth.mobile_placeholder': 'उदा. 9876543210',
+    'auth.email_address': 'ईमेल आईडी',
+    'auth.email_placeholder': 'उदा. student@example.com',
+    'auth.create_password': 'पासवर्ड बनाएं',
+    'auth.password_min_placeholder': 'कम से कम 6 अक्षर',
+    'auth.btn_register': 'छात्र खाता पंजीकृत करें',
+    'auth.creating_account': 'खाता बनाया जा रहा है...',
+    'auth.btn_back_login': 'साइन इन पर वापस जाएं',
+    'auth.reset_title': 'पासवर्ड रीसेट करें',
+    'auth.reset_sub': 'अपना पंजीकृत ईमेल दर्ज करें, आपको रीसेट लिंक भेज दिया जाएगा।',
+    'auth.reset_email_label': 'ईमेल पता',
+    'auth.reset_email_placeholder': 'ईमेल दर्ज करें',
+    'auth.cancel': 'रद्द करें',
+    'auth.send_reset_link': 'रीसेट लिंक भेजें'
   }
 };
 

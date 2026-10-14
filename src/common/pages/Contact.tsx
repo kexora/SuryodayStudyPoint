@@ -67,24 +67,34 @@ export function Contact() {
             
             <ScrollReveal direction="right" delay={0.2}>
               <div className="flex items-start space-x-4 group">
-                <div className="w-12 h-12 rounded-full bg-crhs-gold/20 flex items-center justify-center shrink-0 group-hover:bg-crhs-gold transition-colors">
+                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500 transition-colors">
                   <Phone className="h-6 w-6 text-crhs-navy" />
                 </div>
                 <div>
                   <h4 className="font-bold text-crhs-navy uppercase tracking-wider text-sm mb-1">{t('contact.phone', 'Phone Number')}</h4>
-                  <p className="text-slate-600 text-sm mb-1">{settings.contactNumber || schoolConfig.contact.phonePrimary}</p>
+                  <a 
+                    href={`tel:${(settings.contactNumber || schoolConfig.contact.phonePrimary).replace(/\s+/g, '')}`}
+                    className="text-crhs-navy hover:text-amber-600 font-extrabold text-sm mb-1 inline-block hover:underline transition-colors"
+                  >
+                    {settings.contactNumber || schoolConfig.contact.phonePrimary}
+                  </a>
                 </div>
               </div>
             </ScrollReveal>
             
             <ScrollReveal direction="right" delay={0.3}>
               <div className="flex items-start space-x-4 group">
-                <div className="w-12 h-12 rounded-full bg-crhs-gold/20 flex items-center justify-center shrink-0 group-hover:bg-crhs-gold transition-colors">
+                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500 transition-colors">
                   <Mail className="h-6 w-6 text-crhs-navy" />
                 </div>
                 <div>
                   <h4 className="font-bold text-crhs-navy uppercase tracking-wider text-sm mb-1">{t('contact.email', 'Email Address')}</h4>
-                  <p className="text-slate-600 text-sm mb-1">{settings.contactEmail || schoolConfig.contact.emailPrimary}</p>
+                  <a 
+                    href={`mailto:${settings.contactEmail || schoolConfig.contact.emailPrimary}`}
+                    className="text-crhs-navy hover:text-amber-600 font-extrabold text-sm mb-1 inline-block hover:underline transition-colors break-all"
+                  >
+                    {settings.contactEmail || schoolConfig.contact.emailPrimary}
+                  </a>
                 </div>
               </div>
             </ScrollReveal>

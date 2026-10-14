@@ -92,8 +92,14 @@ export function Header() {
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center w-full gap-2">
           <div className="hidden sm:flex items-center gap-4 md:gap-6 shrink-0">
-            <span className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-amber-400" /> {settings.contactNumber || schoolConfig.contact.phonePrimary}</span>
-            <span className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-amber-400" /> {settings.contactEmail || schoolConfig.contact.emailPrimary}</span>
+            <a href={`tel:${(settings.contactNumber || schoolConfig.contact.phonePrimary).replace(/\s+/g, '')}`} className="flex items-center gap-1.5 hover:text-amber-300 transition-colors focus:outline-none focus:ring-1 focus:ring-amber-400 rounded px-1" title="Call Us">
+              <Phone className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span>{settings.contactNumber || schoolConfig.contact.phonePrimary}</span>
+            </a>
+            <a href={`mailto:${settings.contactEmail || schoolConfig.contact.emailPrimary}`} className="flex items-center gap-1.5 hover:text-amber-300 transition-colors focus:outline-none focus:ring-1 focus:ring-amber-400 rounded px-1" title="Email Us">
+              <Mail className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span>{settings.contactEmail || schoolConfig.contact.emailPrimary}</span>
+            </a>
           </div>
           <div className="flex gap-3 uppercase w-full sm:w-auto justify-between sm:justify-end items-center shrink-0">
             {/* Language Switcher in Top Bar */}

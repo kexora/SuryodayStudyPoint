@@ -115,7 +115,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             name = schoolConfig.schoolName;
             updatedNeeded = true;
           }
-          if (!addr || addr.toLowerCase().includes('tarwara') || addr.toLowerCase().includes('siwan')) {
+          if (!addr || addr.toLowerCase().includes('tarwara') || addr.toLowerCase().includes('siwan') || addr.toLowerCase().includes('sirisiya')) {
             addr = schoolConfig.location.fullAddress;
             updatedNeeded = true;
           }

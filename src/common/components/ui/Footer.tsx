@@ -75,18 +75,30 @@ export function Footer() {
           {/* Col 4: Contact & Socials */}
           <div className="space-y-4">
             <h4 className="font-black text-sm uppercase tracking-widest text-amber-400 mb-4 border-b border-white/10 pb-2">{t('footer.contact')}</h4>
-            <div className="space-y-3 text-xs text-slate-300">
+            <div className="space-y-3 text-xs font-semibold text-slate-200">
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-crhs-gold shrink-0 mt-0.5" />
-                <span>{settings.address}</span>
+                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span className="text-slate-200 leading-relaxed">{settings.address}</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-crhs-gold shrink-0" />
-                <span>{settings.contactNumber || schoolConfig.contact.phonePrimary}</span>
+                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                <a 
+                  href={`tel:${(settings.contactNumber || schoolConfig.contact.phonePrimary).replace(/\s+/g, '')}`}
+                  className="text-white hover:text-amber-400 hover:underline transition-colors font-bold tracking-wide"
+                  title="Call Us"
+                >
+                  {settings.contactNumber || schoolConfig.contact.phonePrimary}
+                </a>
               </div>
               <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-crhs-gold shrink-0" />
-                <span>{settings.contactEmail || schoolConfig.contact.emailPrimary}</span>
+                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                <a 
+                  href={`mailto:${settings.contactEmail || schoolConfig.contact.emailPrimary}`}
+                  className="text-white hover:text-amber-400 hover:underline transition-colors font-bold tracking-wide break-all"
+                  title="Email Us"
+                >
+                  {settings.contactEmail || schoolConfig.contact.emailPrimary}
+                </a>
               </div>
             </div>
 
