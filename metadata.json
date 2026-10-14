@@ -1,0 +1,8 @@
+{
+  "name": "Suryoday Study Point",
+  "description": "Suryoday Study Point iss ke coachinge ke liye badla abb puri details abb coaching ke rahna chhaiye aur ye coacing oniline offfline padhati hai",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
