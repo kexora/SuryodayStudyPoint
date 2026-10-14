@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './common/components/ui/Header';
 import { Footer } from './common/components/ui/Footer';
 import { ScrollToTop } from './common/components/ui/ScrollToTop';
