@@ -103,9 +103,18 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const fetchSettings = async () => {
       try {
         const docRef = doc(db, 'settings', 'general');
-        const docSnap = await getDoc(docRef);
+        
+        // Timeout promise after 3500ms to prevent hanging on network/offline state
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Firestore fetch timeout")), 3500)
+        );
 
-        if (docSnap.exists()) {
+        const docSnap = await Promise.race([
+          getDoc(docRef),
+          timeoutPromise
+        ]) as any;
+
+        if (docSnap && docSnap.exists && docSnap.exists()) {
           const fetchedData = docSnap.data() as Partial<WebsiteSettings>;
           let name = fetchedData.schoolName;
           let addr = fetchedData.address;

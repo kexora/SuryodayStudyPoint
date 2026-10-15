@@ -38,7 +38,8 @@ export function HeroSlider() {
         
         setDbSlides(fetchedSlides);
       } catch (error) {
-        console.error('Error fetching hero slides:', error);
+        // Fallback gracefully on permission error or offline
+        setDbSlides([]);
       } finally {
         setLoading(false);
       }

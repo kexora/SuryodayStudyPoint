@@ -32,7 +32,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userData, setUserData] = useState<UserData | null>(() => {
     const encryptedData = localStorage.getItem('secure_user_data');
     if (encryptedData) {
-      return decryptData(encryptedData);
+      try {
+        return decryptData(encryptedData);
+      } catch {
+        return null;
+      }
     }
     return null;
   });
@@ -41,22 +45,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserData = async (firebaseUser: User) => {
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
-      const userSnap = await getDoc(userRef);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Firestore user fetch timeout")), 3500)
+      );
 
-      if (userSnap.exists()) {
+      const userSnap = await Promise.race([
+        getDoc(userRef),
+        timeoutPromise
+      ]) as any;
+
+      if (userSnap && userSnap.exists && userSnap.exists()) {
         const data = userSnap.data() as UserData;
         setUserData(data);
         localStorage.setItem('secure_user_data', encryptData(data));
       } else {
-        // New user without doc
         const newUser: UserData = {
           uid: firebaseUser.uid,
           role: '__kx_0x4',
           email: firebaseUser.email,
-          name: firebaseUser.displayName,
-          fullName: firebaseUser.displayName || undefined,
+          name: firebaseUser.displayName || 'Student',
+          fullName: firebaseUser.displayName || 'Student',
         };
-        await setDoc(userRef, newUser);
+        await setDoc(userRef, newUser).catch(() => {});
         setUserData(newUser);
         localStorage.setItem('secure_user_data', encryptData(newUser));
       }
@@ -66,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         uid: firebaseUser.uid,
         role: '__kx_0x4',
         email: firebaseUser.email,
-        name: firebaseUser.displayName,
+        name: firebaseUser.displayName || 'Student',
       };
       setUserData(fallbackData);
       localStorage.setItem('secure_user_data', encryptData(fallbackData));
@@ -74,18 +84,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // If there is local secure_user_data already, set user initially for instant load
+    const encryptedData = localStorage.getItem('secure_user_data');
+    if (encryptedData) {
+      try {
+        const data = decryptData(encryptedData);
+        if (data) {
+          setUserData(data);
+          setUser({ uid: data.uid || 'local-user', email: data.email, displayName: data.name } as any);
+        }
+      } catch (e) {
+        console.error("Error loading local auth cache", e);
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
         await fetchUserData(firebaseUser);
       } else {
-        setUserData(null);
-        localStorage.removeItem('secure_user_data');
+        // Keep local user if active and offline, or clear if signed out explicitly
+        if (!localStorage.getItem('secure_user_data')) {
+          setUserData(null);
+        }
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   const refreshUserData = async () => {
@@ -96,7 +129,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     localStorage.removeItem('secure_user_data');
-    await firebaseSignOut(auth);
+    localStorage.removeItem('ssp_current_user');
+    setUserData(null);
+    setUser(null);
+    try {
+      await firebaseSignOut(auth);
+    } catch (e) {
+      // Ignore
+    }
   };
 
   return (

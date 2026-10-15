@@ -141,15 +141,15 @@ export function Header() {
         "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex justify-between items-center transition-all duration-300 gap-4",
         isScrolled ? "py-1.5" : "py-2.5 border-b border-gray-100"
       )}>
-        <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-crhs-navy shadow-md group-hover:scale-105 transition-transform shrink-0">
-            <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-crhs-navy fill-crhs-navy" />
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-crhs-navy shadow-md group-hover:scale-105 transition-transform shrink-0">
+            <Sun className="w-4 h-4 sm:w-6 sm:h-6 text-crhs-navy fill-crhs-navy" />
           </div>
-          <div className="flex flex-col justify-center">
-            <h1 className="font-black text-sm sm:text-base md:text-lg tracking-tight uppercase m-0 leading-none flex items-center gap-1.5">
-              <span className="text-crhs-navy group-hover:text-amber-600 transition-colors">{settings.schoolName}</span>
+          <div className="flex flex-col justify-center min-w-0">
+            <h1 className="font-black text-xs sm:text-base md:text-lg tracking-tight uppercase m-0 leading-tight truncate">
+              <span className="text-crhs-navy group-hover:text-amber-600 transition-colors truncate">{settings.schoolName}</span>
             </h1>
-            <p className="text-[9px] sm:text-[10px] tracking-wider font-bold text-amber-600 m-0 mt-1 leading-none uppercase truncate max-w-[220px] sm:max-w-none">{t('nav.tagline')}</p>
+            <p className="text-[8px] sm:text-[10px] tracking-wider font-bold text-amber-600 m-0 mt-0.5 leading-none uppercase truncate max-w-[160px] sm:max-w-none">{t('nav.tagline')}</p>
           </div>
         </Link>
 
