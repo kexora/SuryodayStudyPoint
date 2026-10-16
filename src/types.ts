@@ -45,3 +45,22 @@ export interface RegistrationValidationErrors {
   email?: string;
   password?: string;
 }
+
+export interface CourseItem {
+  id: string;
+  title: string;
+  target: string;
+  modes: ('Online' | 'Offline')[];
+  subjects: string[];
+  highlights: string[];
+  description?: string;
+  academicSession?: string;
+  batchTiming?: string;
+  fee?: string;
+  duration?: string;
+  isAdmissionOpen: boolean;
+  order?: number;
+  imageUrl?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}

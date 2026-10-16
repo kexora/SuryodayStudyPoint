@@ -14,7 +14,8 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Megaphone
+  Megaphone,
+  BookOpen
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
@@ -144,6 +145,7 @@ export function AdminDashboard() {
   ];
 
   const quickActions = [
+    { title: 'Courses & Batches', icon: BookOpen, link: '/admin/courses', desc: 'Manage courses & admissions' },
     { title: 'Family Mailer', icon: Mail, link: '/admin/communication', desc: 'Send official emails' },
     { title: 'Applications', icon: ShieldCheck, link: '/admin/applications', desc: 'Review student apps' },
     { title: 'New Notice', icon: Bell, link: '/admin/notices', desc: 'Publish announcement' },

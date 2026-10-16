@@ -38,6 +38,7 @@ import { AdminCommunicationPage } from './admin/pages/AdminCommunicationPage';
 import { AdminUserManagement } from './admin/pages/AdminUserManagement';
 import { AdminLetterManagementPage } from './admin/pages/AdminLetterManagementPage';
 import { AdminAlertsPage } from './admin/pages/AdminAlertsPage';
+import { AdminCoursesPage } from './admin/pages/AdminCoursesPage';
 
 
 
@@ -103,6 +104,7 @@ export default function App() {
               <Route path="gallery" element={<AdminGalleryPage />} />
               <Route path="notices" element={<AdminNoticesPage />} />
               <Route path="hero-banners" element={<AdminHeroBannersPage />} />
+              <Route path="courses" element={<AdminCoursesPage />} />
             </Route>
             <Route path="*" element={<div className="p-20 text-center font-bold text-2xl text-crhs-navy">404 - Page Not Found</div>} />
           </Routes>

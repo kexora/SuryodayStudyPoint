@@ -328,8 +328,8 @@ const translations: Record<Language, Record<string, string>> = {
     'academics.mode_title': 'अध्ययन का माध्यम चुनें',
     'academics.mode_desc': 'ऑनलाइन लाइव या ऑफलाइन क्लासरूम के अनुसार बैचेज देखें',
     'academics.all_batches': 'सभी बैचेज',
-    'academics.online_batches': '💻 ऑनलाइन बैचेज',
-    'academics.offline_batches': '🏫 ऑफलाइन बैचेज',
+    'academics.online_batches': 'ऑनलाइन बैचेज',
+    'academics.offline_batches': 'ऑफलाइन बैचेज',
 
     // Facilities Page
     'facilities.badge': 'आधुनिक इंफ्रास्ट्रक्चर',
@@ -421,6 +421,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const saved = localStorage.getItem('suryoday_lang');
     return (saved === 'hi' || saved === 'en') ? saved : 'en';
   });
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    if (language === 'hi') {
+      document.documentElement.classList.add('lang-hi');
+    } else {
+      document.documentElement.classList.remove('lang-hi');
+    }
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

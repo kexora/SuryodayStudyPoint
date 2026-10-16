@@ -59,21 +59,19 @@ export function AdminLayout() {
     if (isAdmin || isSuperAdmin) {
       const admissionSub = [];
       admissionSub.push({ name: 'Applications', path: '/admin/applications' });
+      admissionSub.push({ name: 'Course Admissions', path: '/admin/courses' });
       if (isSuperAdmin) {
         admissionSub.push({ name: 'Campaigns', path: '/admin/campaigns' });
       }
       
-      if (admissionSub.length === 1) {
-        items.push({ name: 'Applications', path: '/admin/applications', icon: Users });
-      } else {
-        items.push({ name: 'Admissions', icon: Users, subItems: admissionSub });
-      }
+      items.push({ name: 'Admissions', icon: Users, subItems: admissionSub });
     }
     
     items.push({
       name: 'Content',
       icon: FileText,
       subItems: [
+        { name: 'Courses & Academics', path: '/admin/courses' },
         { name: 'Gallery', path: '/admin/gallery' },
         { name: 'Notices', path: '/admin/notices' },
         { name: 'Hero Banners', path: '/admin/hero-banners' },

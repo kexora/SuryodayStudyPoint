@@ -149,12 +149,18 @@ export function Header() {
             <h1 className="font-black text-xs sm:text-base md:text-lg tracking-tight uppercase m-0 leading-tight truncate">
               <span className="text-crhs-navy group-hover:text-amber-600 transition-colors truncate">{settings.schoolName}</span>
             </h1>
-            <p className="text-[8px] sm:text-[10px] tracking-wider font-bold text-amber-600 m-0 mt-0.5 leading-none uppercase truncate max-w-[160px] sm:max-w-none">{t('nav.tagline')}</p>
+            <p className={cn(
+              "text-[8px] sm:text-[10px] font-bold text-amber-600 m-0 mt-0.5 leading-none truncate max-w-[220px] xs:max-w-[260px] sm:max-w-none",
+              language === 'hi' ? "tracking-normal" : "tracking-wider uppercase"
+            )}>{t('nav.tagline')}</p>
           </div>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden lg:flex items-center gap-3 xl:gap-5 text-[10px] xl:text-[11px] font-bold uppercase tracking-wider shrink-0">
+        <div className={cn(
+          "hidden lg:flex items-center gap-3 xl:gap-5 text-[10px] xl:text-[11px] font-bold shrink-0",
+          language === 'hi' ? "tracking-normal font-semibold" : "uppercase tracking-wider"
+        )}>
           {navLinks.map((link) => (
             <Link
               key={link.name}
@@ -177,7 +183,7 @@ export function Header() {
 
             {user ? (
               <div className="flex items-center gap-2">
-                <Link to={userData?.role === '__kx_0x2' || userData?.role === '__kx_0x1' ? "/admin" : "/dashboard"} className="text-crhs-navy hover:text-amber-600 transition-colors tracking-wider text-[10px] font-black uppercase flex items-center gap-1 whitespace-nowrap">
+                <Link to={userData?.role === '__kx_0x2' || userData?.role === '__kx_0x1' ? "/admin" : "/dashboard"} className="text-crhs-navy hover:text-amber-600 transition-colors text-[10px] font-bold flex items-center gap-1 whitespace-nowrap">
                   <UserIcon className="w-3 h-3 text-amber-500" />
                   {userData?.role === '__kx_0x2' || userData?.role === '__kx_0x1' ? 'Admin' : 'Dashboard'}
                 </Link>
@@ -190,14 +196,14 @@ export function Header() {
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="text-crhs-navy hover:text-amber-600 transition-colors tracking-wider text-[10px] font-black uppercase whitespace-nowrap">
+              <Link to="/login" className="text-crhs-navy hover:text-amber-600 transition-colors text-[11px] font-bold whitespace-nowrap">
                 {t('nav.login')}
               </Link>
             )}
             
             {activeCampaign && (
               <Link to="/admissions" className="shrink-0">
-                <Button className="shadow-sm hover:shadow transition-all py-1.5 px-3 h-auto text-[10px] bg-amber-500 hover:bg-amber-600 text-crhs-navy font-black whitespace-nowrap">
+                <Button className="shadow-xs hover:shadow-sm transition-all py-1.5 px-3 h-auto text-[10px] bg-amber-500 hover:bg-amber-600 text-crhs-navy font-bold whitespace-nowrap">
                   {t('nav.apply_online')}
                 </Button>
               </Link>

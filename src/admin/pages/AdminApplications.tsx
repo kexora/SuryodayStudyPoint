@@ -261,8 +261,8 @@ export function AdminApplications() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
-                          Class {app.classApplied || app.prevClass || 'N/A'}
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 max-w-[200px] truncate" title={app.courseTitle || app.classApplied || app.prevClass}>
+                          {app.courseTitle || app.classApplied || (app.prevClass ? `Class ${app.prevClass}` : 'N/A')}
                         </span>
                       </td>
                       <td className="py-4 px-6">

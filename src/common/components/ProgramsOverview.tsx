@@ -1,18 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollReveal } from '@/common/components/ui/ScrollReveal';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { CourseItem } from '@/types';
 
 export function ProgramsOverview() {
   const { t } = useLanguage();
+  const [courses, setCourses] = useState<CourseItem[]>([]);
 
-  const programs = [
-    { level: t('prog.p1_title'), grades: t('prog.p1_sub'), img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800', desc: t('prog.p1_desc') },
-    { level: t('prog.p2_title'), grades: t('prog.p2_sub'), img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=800', desc: t('prog.p2_desc') },
-    { level: t('prog.p3_title'), grades: t('prog.p3_sub'), img: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800', desc: t('prog.p3_desc') },
-    { level: t('prog.p4_title'), grades: t('prog.p4_sub'), img: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800', desc: t('prog.p4_desc') },
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'courses'), (snapshot) => {
+      const list: CourseItem[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() } as CourseItem);
+      });
+      list.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+      setCourses(list);
+    }, (err) => {
+      console.error('Error fetching courses in ProgramsOverview:', err);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const defaultPrograms = [
+    { id: '1', level: t('prog.p1_title'), grades: t('prog.p1_sub'), img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800', desc: t('prog.p1_desc'), isAdmissionOpen: true },
+    { id: '2', level: t('prog.p2_title'), grades: t('prog.p2_sub'), img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=800', desc: t('prog.p2_desc'), isAdmissionOpen: true },
+    { id: '3', level: t('prog.p3_title'), grades: t('prog.p3_sub'), img: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800', desc: t('prog.p3_desc'), isAdmissionOpen: false },
+    { id: '4', level: t('prog.p4_title'), grades: t('prog.p4_sub'), img: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800', desc: t('prog.p4_desc'), isAdmissionOpen: false },
   ];
+
+  const defaultImages = [
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
+  ];
+
+  const displayList = courses.length > 0 ? courses.slice(0, 4).map((c, i) => ({
+    id: c.id,
+    level: c.title,
+    grades: c.target || (c.modes ? c.modes.join(' & ') : ''),
+    img: c.imageUrl || defaultImages[i % defaultImages.length],
+    desc: (c.highlights && c.highlights[0]) || c.description || c.target,
+    isAdmissionOpen: c.isAdmissionOpen
+  })) : defaultPrograms;
 
   return (
     <section className="py-16 md:py-24 bg-white relative border-t border-gray-100">
@@ -30,19 +65,45 @@ export function ProgramsOverview() {
         </ScrollReveal>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {programs.map((prog, idx) => (
-            <ScrollReveal key={idx} direction="up" delay={0.1 * (idx + 1)}>
+          {displayList.map((prog, idx) => (
+            <ScrollReveal key={prog.id || idx} direction="up" delay={0.1 * (idx + 1)}>
               <div className="group block relative overflow-hidden bg-slate-900 aspect-[4/5] sm:aspect-square lg:aspect-[4/5] border-t-4 border-amber-500 shadow-md">
                 <img src={prog.img} alt={prog.level} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-crhs-navy/95 via-crhs-navy/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-crhs-navy/95 via-crhs-navy/50 to-transparent" />
                 
-                <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                  <div className="transform translate-y-8 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                    <span className="text-amber-400 font-bold text-xs uppercase tracking-wider mb-2 block opacity-90">{prog.grades}</span>
-                    <h3 className="text-xl font-black text-white mb-3">{prog.level}</h3>
-                    <p className="text-white/80 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 leading-relaxed">
+                {prog.isAdmissionOpen && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <span className="px-2.5 py-1 bg-amber-400 text-crhs-navy text-[10px] font-black uppercase tracking-wider rounded shadow flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-crhs-navy" /> Open
+                    </span>
+                  </div>
+                )}
+
+                <div className="absolute inset-0 p-6 flex flex-col justify-end z-10">
+                  <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                    <span className="text-amber-400 font-bold text-xs uppercase tracking-wider mb-2 block opacity-90 line-clamp-1">{prog.grades}</span>
+                    <h3 className="text-xl font-black text-white mb-2 leading-tight line-clamp-2">{prog.level}</h3>
+                    <p className="text-white/80 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 leading-relaxed line-clamp-3 mb-3">
                       {prog.desc}
                     </p>
+                    
+                    {prog.isAdmissionOpen ? (
+                      <Link 
+                        to={`/admissions?courseId=${prog.id}&course=${encodeURIComponent(prog.level)}`}
+                        className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-amber-400 hover:text-white"
+                      >
+                        <span>Apply Online</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : (
+                      <Link 
+                        to="/academics" 
+                        className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-white"
+                      >
+                        <span>View Details</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

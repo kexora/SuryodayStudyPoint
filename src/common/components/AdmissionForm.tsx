@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { collection, addDoc, query, where, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
+import { CourseItem } from '@/types';
 
 const STEPS = [
   { id: 1, title: "Student Details", desc: "Personal info & identity" },
@@ -21,7 +22,12 @@ const STEPS = [
   { id: 4, title: "Documents", desc: "Upload required files" }
 ];
 
-export function AdmissionForm() {
+interface AdmissionFormProps {
+  targetCourse?: CourseItem | null;
+  openCourses?: CourseItem[];
+}
+
+export function AdmissionForm({ targetCourse, openCourses = [] }: AdmissionFormProps) {
   const { user, userData } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -110,14 +116,40 @@ export function AdmissionForm() {
   }, [userData]);
 
   useEffect(() => {
+    if (targetCourse) {
+      setClassApplied(targetCourse.title);
+      if (targetCourse.modes && targetCourse.modes.length === 1) {
+        setStudyMode(targetCourse.modes[0] === 'Online' ? 'Online Live Class' : 'Offline Classroom');
+      }
+    } else if (openCourses.length > 0 && !classApplied) {
+      setClassApplied(openCourses[0].title);
+    }
+  }, [targetCourse, openCourses]);
+
+  useEffect(() => {
     const checkExistingApplication = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       try {
-        const q = query(collection(db, 'applications'), where('userId', '==', user.uid));
+        let q;
+        if (targetCourse?.id) {
+          q = query(
+            collection(db, 'applications'),
+            where('userId', '==', user.uid),
+            where('courseId', '==', targetCourse.id)
+          );
+        } else {
+          q = query(collection(db, 'applications'), where('userId', '==', user.uid));
+        }
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
+          const appData = querySnapshot.docs[0].data() as any;
           setHasExistingApp(true);
-          setEnrollmentNo(querySnapshot.docs[0].data().enrollmentNo);
+          setEnrollmentNo(appData.enrollmentNo || '');
+          setExistingAppStatus(appData.status || 'Pending');
+          setExistingAppCrhsId(appData.crhsId || '');
           setIsSubmitted(true);
         }
       } catch (error) {
@@ -127,7 +159,7 @@ export function AdmissionForm() {
       }
     };
     checkExistingApplication();
-  }, [user]);
+  }, [user, targetCourse]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -193,6 +225,7 @@ export function AdmissionForm() {
         gender,
         studyMode,
         classApplied,
+        courseId: targetCourse?.id || '',
         category,
         busRequired,
         previouslyStudied,
@@ -344,6 +377,26 @@ export function AdmissionForm() {
                         <h2 className="text-2xl font-black text-crhs-navy uppercase tracking-wider mb-2">Student Details</h2>
                         <p className="text-slate-500 text-sm">Enter the applicant's personal information.</p>
                       </div>
+
+                      {targetCourse && (
+                        <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded">
+                              Targeted Course Batch
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded flex items-center gap-1">
+                              <Check className="w-3 h-3 text-emerald-600" /> Admissions Open
+                            </span>
+                          </div>
+                          <h3 className="text-base sm:text-lg font-black text-crhs-navy">{targetCourse.title}</h3>
+                          <p className="text-xs text-slate-600 font-medium">{targetCourse.target}</p>
+                          {targetCourse.batchTiming && (
+                            <p className="text-[11px] text-amber-800 font-bold mt-1 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" /> {targetCourse.batchTiming}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
@@ -470,25 +523,33 @@ export function AdmissionForm() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-slate-700">Course / Batch Applied For <span className="text-red-500">*</span></label>
-                          <CustomSelect 
-                            options={[
-                              { value: 'Class 6th Evening Batch', label: 'Class 6th Evening Batch' },
-                              { value: 'Class 7th Evening Batch', label: 'Class 7th Evening Batch' },
-                              { value: 'Class 8th Evening Batch', label: 'Class 8th Evening Batch' },
-                              { value: 'Class 9th Board Batch', label: 'Class 9th Board Batch' },
-                              { value: 'Class 10th Board Batch', label: 'Class 10th Board Batch' },
-                              { value: 'Class 11th Science (PCM/PCB)', label: 'Class 11th Science Batch' },
-                              { value: 'Class 12th Science (PCM/PCB)', label: 'Class 12th Science Batch' },
-                              { value: 'Suryoday Competition - General', label: 'General Competition (SSC / UP Police / Army)' },
-                              { value: 'Suryoday Computer - CCC', label: 'Computer - CCC Course (NIELIT Prep)' },
-                              { value: 'Suryoday Computer - ADCA', label: 'Computer - ADCA 1-Year Diploma' },
-                              { value: 'Suryoday Computer - DCA / Tally', label: 'Computer - DCA / Tally Accounting' },
-                              { value: 'Target JEE & NEET Foundation', label: 'Target JEE & NEET Foundation Batch' },
-                            ]}
-                            value={classApplied}
-                            onChange={(val) => setClassApplied(val)}
-                            placeholder="Select course or batch"
-                          />
+                          {targetCourse ? (
+                            <div className="p-3 bg-slate-100 border-2 border-slate-300 rounded-lg flex items-center justify-between">
+                              <span className="text-xs sm:text-sm font-black text-crhs-navy">{classApplied || targetCourse.title}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                                Selected Batch
+                              </span>
+                            </div>
+                          ) : (
+                            <CustomSelect 
+                              options={
+                                openCourses.length > 0
+                                  ? openCourses.map(c => ({ 
+                                      value: c.title, 
+                                      label: `${c.title} • ${c.academicSession || 'Admissions Open'}` 
+                                    }))
+                                  : [
+                                    { value: 'School Academic Batches (Class 6th to 12th)', label: 'School Academic Batches (Class 6th to 12th)' },
+                                    { value: 'Suryoday Computer Classes (CCC / ADCA / DCA / Tally)', label: 'Suryoday Computer Classes (CCC / ADCA / DCA / Tally)' },
+                                    { value: 'Suryoday Competition Classes (General Competition)', label: 'Suryoday Competition Classes (General Competition)' },
+                                    { value: 'Target JEE & NEET Foundation Batch', label: 'Target JEE & NEET Foundation Batch' },
+                                  ]
+                              }
+                              value={classApplied}
+                              onChange={(val) => setClassApplied(val)}
+                              placeholder="Select course or batch"
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-slate-700">Category</label>
