@@ -7,7 +7,7 @@ import { Input } from '@/common/components/ui/Input';
 import { CustomSelect } from '@/common/components/ui/CustomSelect';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, setDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
@@ -103,7 +103,7 @@ export function AdminApplications() {
     setSaving(true);
     try {
       const appRef = doc(db, 'applications', selectedApp.id);
-      await updateDoc(appRef, editForm);
+      await setDoc(appRef, editForm, { merge: true });
       
       const updatedApp = { ...selectedApp, ...editForm };
       

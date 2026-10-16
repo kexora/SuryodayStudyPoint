@@ -107,17 +107,6 @@ export function HeroSlider() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  if (loading && dbSlides.length === 0) {
-    // Return initial slide instead of blank screen while loading
-    return (
-      <div className="relative h-[65vh] sm:h-[75vh] md:h-[85vh] w-full overflow-hidden bg-slate-900 flex items-center justify-center text-white">
-        <div className="text-center p-6">
-          <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-2 animate-pulse">Suryoday Study Point</p>
-          <h1 className="text-3xl font-black uppercase">Loading Batches & Courses...</h1>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative h-[65vh] sm:h-[75vh] md:h-[85vh] w-full overflow-hidden bg-slate-900 flex-none border-b border-gray-200">

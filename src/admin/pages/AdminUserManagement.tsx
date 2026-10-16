@@ -16,7 +16,7 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserData, UserRole } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -100,8 +100,20 @@ export function AdminUserManagement() {
         }
       });
 
-      await updateDoc(userRef, updateData);
+      await setDoc(userRef, updateData, { merge: true });
       
+      // Update local storage users cache if present
+      try {
+        const localUsers = JSON.parse(localStorage.getItem('ssp_local_users') || '[]');
+        const idx = localUsers.findIndex((u: any) => u.uid === editingUser.uid);
+        if (idx >= 0) {
+          localUsers[idx] = { ...localUsers[idx], ...updateData };
+          localStorage.setItem('ssp_local_users', JSON.stringify(localUsers));
+        }
+      } catch (cacheErr) {
+        console.warn("Local storage cache update error:", cacheErr);
+      }
+
       setMessage({ type: 'success', text: 'User details updated successfully!' });
       
       // Update local state

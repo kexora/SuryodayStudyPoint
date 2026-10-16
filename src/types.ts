@@ -15,6 +15,9 @@ export interface UserData {
   state?: string;
   pincode?: string;
   crhsId?: string;
+  studentId?: string;
+  classApplied?: string;
+  courseCategory?: string;
   createdAt?: string;
 }
 

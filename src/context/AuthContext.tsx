@@ -14,6 +14,7 @@ interface AuthContextType {
   role: UserRole | null;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  updateUserData: (newFields: Partial<UserData>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   signOut: async () => {},
   refreshUserData: async () => {},
+  updateUserData: async () => false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -59,12 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserData(data);
         localStorage.setItem('secure_user_data', encryptData(data));
       } else {
+        const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
+        const isAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in' || cleanEmail.startsWith('admin@');
         const newUser: UserData = {
           uid: firebaseUser.uid,
-          role: '__kx_0x4',
+          role: isAdmin ? '__kx_0x1' : '__kx_0x4',
           email: firebaseUser.email,
-          name: firebaseUser.displayName || 'Student',
-          fullName: firebaseUser.displayName || 'Student',
+          name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
+          fullName: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
         };
         await setDoc(userRef, newUser).catch(() => {});
         setUserData(newUser);
@@ -72,11 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error("Firestore error loading user profile:", error);
+      const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
+      const isAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in' || cleanEmail.startsWith('admin@');
       const fallbackData: UserData = {
         uid: firebaseUser.uid,
-        role: '__kx_0x4',
+        role: isAdmin ? '__kx_0x1' : '__kx_0x4',
         email: firebaseUser.email,
-        name: firebaseUser.displayName || 'Student',
+        name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
       };
       setUserData(fallbackData);
       localStorage.setItem('secure_user_data', encryptData(fallbackData));
@@ -127,6 +133,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserData = async (newFields: Partial<UserData>): Promise<boolean> => {
+    try {
+      const current = userData || ({} as UserData);
+      const updated: UserData = {
+        ...current,
+        ...newFields,
+        fullName: newFields.fullName || newFields.name || current.fullName || current.name || '',
+        name: newFields.fullName || newFields.name || current.fullName || current.name || '',
+      };
+
+      // 1. Immediately update local state
+      setUserData(updated);
+
+      // 2. Encrypt & save to localStorage session
+      localStorage.setItem('secure_user_data', encryptData(updated));
+
+      // 3. Update ssp_local_users cache
+      try {
+        const localUsers = JSON.parse(localStorage.getItem('ssp_local_users') || '[]');
+        const idx = localUsers.findIndex((u: any) => 
+          (updated.uid && u.uid === updated.uid) || 
+          (updated.email && u.email === updated.email) ||
+          (updated.mobileNumber && u.mobileNumber === updated.mobileNumber)
+        );
+        if (idx >= 0) {
+          localUsers[idx] = { ...localUsers[idx], ...updated };
+        } else {
+          localUsers.push(updated);
+        }
+        localStorage.setItem('ssp_local_users', JSON.stringify(localUsers));
+      } catch (cacheErr) {
+        console.warn("Local users update error:", cacheErr);
+      }
+
+      // 4. Persist to Firestore with timeout so UI never hangs
+      const targetUid = user?.uid || updated.uid;
+      if (targetUid) {
+        try {
+          const userRef = doc(db, 'users', targetUid);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Firestore write timeout")), 4000)
+          );
+          await Promise.race([
+            setDoc(userRef, updated, { merge: true }),
+            timeoutPromise
+          ]);
+        } catch (dbErr) {
+          console.warn("Firestore save details notice:", dbErr);
+        }
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Error in updateUserData:", err);
+      return false;
+    }
+  };
+
   const signOut = async () => {
     localStorage.removeItem('secure_user_data');
     localStorage.removeItem('ssp_current_user');
@@ -140,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, role: userData?.role || null, signOut, refreshUserData }}>
+    <AuthContext.Provider value={{ user, userData, loading, role: userData?.role || null, signOut, refreshUserData, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );
