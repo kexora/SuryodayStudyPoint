@@ -3,6 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    
+    <!-- Prevent stale caching of HTML entry so updates appear immediately -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <script>
+      // Immediately unregister any old/stale Service Workers and purge Workbox cache storage
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(cacheNames) {
+          for (var j = 0; j < cacheNames.length; j++) {
+            caches.delete(cacheNames[j]);
+          }
+        });
+      }
+    </script>
+
     <title>Suryoday Study Point | Bhawani Chhapar, Deoria (U.P.)</title>
     
     <!-- Primary Meta Tags -->
