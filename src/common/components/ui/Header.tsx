@@ -15,7 +15,7 @@ import { schoolConfig } from '@/config/schoolConfig';
 import { useLanguage, LanguageSwitcher } from '@/context/LanguageContext';
 
 export function Header() {
-  const { t } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
 
   const navLinks = [
     { name: t('nav.home', 'Home'), path: '/' },
@@ -237,57 +237,75 @@ export function Header() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: '100%' }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 w-auto min-w-[240px] max-w-[80vw] h-[100dvh] bg-white z-[110] lg:hidden shadow-2xl flex flex-col"
+                className="fixed top-0 right-0 w-[285px] max-w-[85vw] h-[100dvh] bg-white z-[110] lg:hidden shadow-2xl flex flex-col"
               >
-                <div className="p-6 pb-2 flex justify-between items-center bg-white border-b border-gray-50/50">
-                  <div className="font-black text-xl text-crhs-navy tracking-tighter uppercase">
-                    {schoolConfig.schoolShortName}
+                {/* Drawer Header with Title, Language Switcher on side, and Close Button */}
+                <div className="px-5 py-4 flex justify-between items-center bg-white border-b border-gray-100 shrink-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 bg-amber-400/20 text-crhs-navy rounded-full flex items-center justify-center shrink-0">
+                      <Sun className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    </div>
+                    <span className="font-black text-base text-crhs-navy tracking-tight uppercase truncate">
+                      {schoolConfig.schoolShortName}
+                    </span>
                   </div>
-                  <button 
-                    onClick={() => setIsMobileMenuOpen(false)} 
-                    className="text-slate-400 p-2 bg-slate-50 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Compact Language Toggle Icon Button on the side */}
+                    <LanguageSwitcher variant="icon" />
+
+                    <button 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      className="text-slate-400 p-1.5 bg-slate-50 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                      aria-label="Close Menu"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 
-                <div className="p-6 pt-6 flex flex-col space-y-1 flex-grow overflow-y-auto">
+                {/* Nav Links with unified sizing and unbroken Devanagari styling */}
+                <div className="px-4 py-5 flex flex-col space-y-1.5 flex-grow overflow-y-auto">
                   {navLinks.map((link, i) => (
                     <motion.div
-                      initial={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
-                      animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                      transition={{ delay: 0.1 + (i * 0.05) }}
+                      initial={{ opacity: 0, x: 15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 + (i * 0.03) }}
                       key={link.name}
                     >
                       <Link
                         to={link.path}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center text-lg font-bold uppercase tracking-widest py-3 px-2 transition-all duration-300",
+                          "flex items-center text-[15px] py-2.5 px-3 rounded-lg transition-all duration-200",
+                          language === 'hi' 
+                            ? "font-bold tracking-normal leading-normal" 
+                            : "font-bold uppercase tracking-wider leading-none",
                           location.pathname === link.path
-                            ? "text-crhs-gold translate-x-2"
-                            : "text-crhs-navy hover:text-crhs-gold hover:translate-x-2"
+                            ? "text-amber-600 bg-amber-50/80 font-black"
+                            : "text-crhs-navy hover:text-amber-600 hover:bg-slate-50"
                         )}
                       >
                         <span 
                           className={cn(
-                            "rounded-full bg-crhs-gold transition-all duration-300", 
-                            location.pathname === link.path ? "w-2 h-2 mr-3 opacity-100 scale-100" : "w-0 h-2 mr-0 opacity-0 scale-0"
+                            "rounded-full bg-amber-500 transition-all duration-200 shrink-0", 
+                            location.pathname === link.path 
+                              ? "w-2 h-2 mr-2.5 opacity-100 scale-100" 
+                              : "w-0 h-2 mr-0 opacity-0 scale-0"
                           )} 
                         />
-                        {link.name}
+                        <span className="truncate">{link.name}</span>
                       </Link>
                     </motion.div>
                   ))}
                 </div>
-                <div className="p-6 border-t border-gray-100 flex flex-col gap-3">
-                  <div className="flex justify-center pb-2 border-b border-gray-100">
-                    <LanguageSwitcher className="w-full justify-center py-2" />
-                  </div>
+
+                {/* Bottom Action Buttons - Clean & Simple */}
+                <div className="p-4 border-t border-gray-100 flex flex-col gap-2.5 bg-slate-50/60 mt-auto shrink-0">
                   {user ? (
                     <>
                       <Link to={userData?.role === '__kx_0x2' || userData?.role === '__kx_0x1' ? "/admin" : "/dashboard"} onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full justify-center">
+                        <Button variant="outline" className="w-full justify-center text-xs font-bold py-2.5">
                           <UserIcon className="w-4 h-4 mr-2" />
                           {userData?.role === '__kx_0x2' || userData?.role === '__kx_0x1' ? 'Admin Portal' : userData?.role === '__kx_0x4' ? 'Student Portal' : userData?.role === '__kx_0x3' ? 'Teacher Portal' : userData?.role === '__kx_0x5' ? 'Guardian Portal' : 'Dashboard'}
                         </Button>
@@ -295,22 +313,24 @@ export function Header() {
                       <Button 
                         onClick={() => { signOut(); setIsMobileMenuOpen(false); }} 
                         variant="outline" 
-                        className="w-full justify-center text-rose-600 border-rose-200 hover:bg-rose-50"
+                        className="w-full justify-center text-xs font-bold py-2.5 text-rose-600 border-rose-200 hover:bg-rose-50"
                       >
-                        <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                        <LogOut className="w-4 h-4 mr-2" /> {t('nav.logout', 'Sign Out')}
                       </Button>
                     </>
                   ) : (
                     <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full justify-center">
-                        <UserIcon className="w-4 h-4 mr-2" />
-                        Sign In
+                      <Button variant="outline" className="w-full justify-center text-xs font-bold py-2.5 border-slate-300">
+                        <UserIcon className="w-4 h-4 mr-2 text-slate-500" />
+                        {t('nav.login', 'Sign In')}
                       </Button>
                     </Link>
                   )}
-                  {activeCampaign && (
+                  {activeCampaign && activeCampaign.isActive && (
                     <Link to="/admissions" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button variant="primary" className="w-full justify-center shadow-md">Apply Online</Button>
+                      <Button variant="primary" className="w-full justify-center text-xs font-bold py-2.5 shadow-sm bg-amber-500 hover:bg-amber-600 text-crhs-navy">
+                        {t('nav.apply_online', 'Apply Online')}
+                      </Button>
                     </Link>
                   )}
                 </div>

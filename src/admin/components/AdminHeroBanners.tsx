@@ -1,6 +1,6 @@
 import { schoolConfig } from "@/config/schoolConfig";
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { getGlobalDriveToken, getOrCreateDriveFolder, checkGlobalDriveStatus, signInWithGoogleDrive, disconnectGoogleDrive } from '@/lib/driveAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/common/components/ui/Card';
@@ -44,26 +44,32 @@ export function AdminHeroBanners() {
   const [driveConnected, setDriveConnected] = useState(false);
 
   useEffect(() => {
-    fetchSlides();
+    setLoading(true);
+    const q = query(collection(db, 'hero_slides'), orderBy('order', 'asc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const fetchedSlides: HeroSlide[] = [];
+        snapshot.forEach((document) => {
+          fetchedSlides.push({ id: document.id, ...document.data() } as HeroSlide);
+        });
+        setSlides(fetchedSlides);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to hero slides in real time:', error);
+        setMessage({ text: 'Error loading banners.', type: 'error' });
+        setLoading(false);
+      }
+    );
+
     checkGlobalDriveStatus().then(status => setDriveConnected(status));
+
+    return () => unsubscribe();
   }, []);
 
   const fetchSlides = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, 'hero_slides'), orderBy('order', 'asc'));
-      const snapshot = await getDocs(q);
-      const fetchedSlides: HeroSlide[] = [];
-      snapshot.forEach((document) => {
-        fetchedSlides.push({ id: document.id, ...document.data() } as HeroSlide);
-      });
-      setSlides(fetchedSlides);
-    } catch (error) {
-      console.error('Error fetching hero slides:', error);
-      setMessage({ text: 'Error loading banners.', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+    // onSnapshot keeps slides synced automatically
   };
 
   const handleConnectDrive = async (e: React.MouseEvent<HTMLButtonElement>) => {

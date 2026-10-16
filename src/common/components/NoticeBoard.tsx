@@ -5,7 +5,7 @@ import { Button } from '@/common/components/ui/Button';
 import { Modal } from '@/common/components/ui/Modal';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAdmission } from '@/context/AdmissionContext';
 
@@ -28,55 +28,37 @@ export function NoticeBoard() {
   const [loading, setLoading] = useState(true);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
+  // Real-time synchronization with Firestore notices collection
   useEffect(() => {
-    const fetchNotices = async () => {
-      try {
-        const q = query(collection(db, 'notices'), orderBy('date', 'desc'), limit(6));
-        const snapshot = await getDocs(q);
+    const noticesRef = collection(db, 'notices');
+    const unsubscribe = onSnapshot(
+      noticesRef,
+      (snapshot) => {
         const fetchedNotices: Notice[] = [];
-        snapshot.forEach((doc) => {
-          fetchedNotices.push({ id: doc.id, ...doc.data() } as Notice);
+        snapshot.forEach((docSnap) => {
+          fetchedNotices.push({ id: docSnap.id, ...docSnap.data() } as Notice);
         });
-        
-        // Sort pinned notices first
-        fetchedNotices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
-        setNotices(fetchedNotices);
-      } catch (error) {
-        // Fallback to default notices on permission error or offline
-        setNotices([
-          {
-            id: 'default-notice-1',
-            title: 'Admission Open for Session 2026-27 (Std. I to XII)',
-            date: new Date().toISOString().split('T')[0],
-            type: 'Admissions',
-            priority: 'Important',
-            isPinned: true,
-            details: 'Applications for admission to Academic Session 2026-27 are now open for both Offline Physical Classes at Bhawani Chhapar, Deoria campus and Online Live Batches. Visit the admission portal to apply online.'
-          },
-          {
-            id: 'default-notice-2',
-            title: 'Suryoday Competition Classes - New Batch Timetable',
-            date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0],
-            type: 'Examinations',
-            priority: 'Normal',
-            isPinned: true,
-            details: 'New batches for SSC, UP Police, Railway, and Army competitive exams commence from next Monday. Special morning and evening shifts available.'
-          },
-          {
-            id: 'default-notice-3',
-            title: 'Computer Training Center - CCC & ADCA Registration',
-            date: new Date(Date.now() - 86400000 * 4).toISOString().split('T')[0],
-            type: 'General',
-            priority: 'Normal',
-            isPinned: false,
-            details: 'Enrollments for NIELIT CCC, ADCA, DCA, and Tally Prime professional computer courses are open with 100% practical lab training.'
+
+        // Sort: pinned first, then by date descending
+        fetchedNotices.sort((a, b) => {
+          if (Boolean(b.isPinned) !== Boolean(a.isPinned)) {
+            return b.isPinned ? 1 : -1;
           }
-        ]);
-      } finally {
+          return (b.date || '').localeCompare(a.date || '');
+        });
+
+        // Limit to top 6 on homepage notice board
+        setNotices(fetchedNotices.slice(0, 6));
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to notices in real time:', error);
+        setNotices([]);
         setLoading(false);
       }
-    };
-    fetchNotices();
+    );
+
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -91,8 +73,8 @@ export function NoticeBoard() {
       </div>
       
       <div className="space-y-4 mb-8 flex-grow">
-        {/* Dynamic Dedicated Admission Status Section */}
-        {activeCampaign && activeCampaign.isActive ? (
+        {/* Dynamic Dedicated Admission Status Section - Only appears if active campaign exists in Firestore */}
+        {activeCampaign && activeCampaign.isActive && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -118,7 +100,7 @@ export function NoticeBoard() {
                 {activeCampaign.title}
               </h4>
               <p className="text-xs text-slate-300 font-medium mt-1 line-clamp-2 leading-relaxed">
-                {activeCampaign.description || "Online admission applications are currently open for Std. I to XII. Submit your application online now."}
+                {activeCampaign.description || "Online admission applications are currently open. Submit your application online now."}
               </p>
             </div>
 
@@ -136,35 +118,20 @@ export function NoticeBoard() {
               </Button>
             </div>
           </motion.div>
-        ) : (
-          <div className="p-3.5 border-l-4 border-slate-300 bg-slate-100/90 text-slate-700 rounded-r-lg space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-700 px-2 py-0.5 border border-slate-300 rounded flex items-center gap-1">
-                <Lock className="w-3 h-3 text-slate-500" /> [CLOSED]
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Admission Notice</span>
-            </div>
-            <p className="text-xs font-bold uppercase text-slate-800">
-              Admissions Currently Closed
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Online admission applications are currently closed. Updates regarding the next session will be posted here.
-            </p>
-          </div>
         )}
 
         {loading ? (
-          <div className="text-center text-slate-500 py-8 font-bold text-xs uppercase tracking-wider">
-            Loading recent notices...
+          <div className="text-center text-slate-400 py-10 font-bold text-xs uppercase tracking-wider animate-pulse flex flex-col items-center justify-center gap-2">
+            <Bell className="w-6 h-6 text-slate-300 animate-bounce" />
+            <span>Connecting to real-time notice board...</span>
           </div>
         ) : notices.length > 0 ? (
           notices.map((notice, index) => (
             <motion.div 
               key={notice.id} 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-20px" }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
               onClick={() => setSelectedNotice(notice)}
               className={`p-4 border-l-4 cursor-pointer group transition-all duration-200 shadow-sm hover:shadow ${
                 notice.priority === 'Urgent'
@@ -205,7 +172,11 @@ export function NoticeBoard() {
             </motion.div>
           ))
         ) : (
-          <div className="text-center text-slate-500 py-8 text-xs font-bold uppercase">No recent notices available.</div>
+          <div className="text-center text-slate-500 py-12 px-4 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center gap-2">
+            <Bell className="w-8 h-8 text-slate-300" />
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-600">No notices published yet</p>
+            <p className="text-[11px] text-slate-400">All announcements will appear here in real time as soon as published.</p>
+          </div>
         )}
       </div>
       

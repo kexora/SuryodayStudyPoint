@@ -11,7 +11,7 @@ import {
   Search, Filter, FileText, Download, Check, AlertCircle, HardDrive,
   Pin, Calendar, ExternalLink, AlertTriangle, Info, Bookmark
 } from 'lucide-react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getGlobalDriveToken, getOrCreateDriveFolder, checkGlobalDriveStatus, signInWithGoogleDrive, disconnectGoogleDrive } from '@/lib/driveAuth';
 
@@ -64,26 +64,32 @@ export function AdminNotices() {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
-    fetchNotices();
+    setLoading(true);
+    const q = query(collection(db, 'notices'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const items: NoticeItem[] = [];
+        snapshot.forEach((doc) => {
+          items.push({ id: doc.id, ...doc.data() } as NoticeItem);
+        });
+        setNotices(items);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to notices in real time:', error);
+        setMessage({ text: 'Failed to load notices', type: 'error' });
+        setLoading(false);
+      }
+    );
+
     checkGlobalDriveStatus().then(status => setDriveConnected(status));
+
+    return () => unsubscribe();
   }, []);
 
   const fetchNotices = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, 'notices'), orderBy('date', 'desc'));
-      const snapshot = await getDocs(q);
-      const items: NoticeItem[] = [];
-      snapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() } as NoticeItem);
-      });
-      setNotices(items);
-    } catch (error) {
-      console.error('Error fetching notices:', error);
-      setMessage({ text: 'Failed to load notices', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+    // Kept for manual triggers if needed, onSnapshot keeps it synced
   };
 
   // Derive all dynamic subjects / categories created

@@ -4,7 +4,7 @@ import { Button } from '@/common/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatGoogleDriveUrl } from './ui/ImageWithLoader';
 import { useAdmission } from '@/context/AdmissionContext';
@@ -27,24 +27,25 @@ export function HeroSlider() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSlides = async () => {
-      try {
-        const q = query(collection(db, 'hero_slides'), orderBy('order', 'asc'));
-        const snapshot = await getDocs(q);
+    const q = query(collection(db, 'hero_slides'), orderBy('order', 'asc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
         const fetchedSlides: HeroSlide[] = [];
         snapshot.forEach((doc) => {
           fetchedSlides.push({ id: doc.id, ...doc.data() } as HeroSlide);
         });
-        
         setDbSlides(fetchedSlides);
-      } catch (error) {
-        // Fallback gracefully on permission error or offline
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to hero slides:', error);
         setDbSlides([]);
-      } finally {
         setLoading(false);
       }
-    };
-    fetchSlides();
+    );
+
+    return () => unsubscribe();
   }, []);
 
   const defaultSlides: HeroSlide[] = [

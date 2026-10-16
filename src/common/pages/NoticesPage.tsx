@@ -9,7 +9,7 @@ import {
   Bell, Search, Filter, Calendar, FileText, Download, Pin, 
   ChevronRight, ArrowLeft, Tag, AlertTriangle, Sparkles, GraduationCap, ArrowRight, Lock
 } from 'lucide-react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdmission } from '@/context/AdmissionContext';
@@ -38,58 +38,39 @@ export function NoticesPage() {
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
+  // Real-time synchronization with Firestore notices collection
   useEffect(() => {
-    const fetchNotices = async () => {
-      try {
-        const q = query(collection(db, 'notices'), orderBy('date', 'desc'));
-        const snapshot = await getDocs(q);
+    const noticesRef = collection(db, 'notices');
+    const unsubscribe = onSnapshot(
+      noticesRef,
+      (snapshot) => {
         const fetchedNotices: Notice[] = [];
-        snapshot.forEach((doc) => {
-          fetchedNotices.push({ id: doc.id, ...doc.data() } as Notice);
+        snapshot.forEach((docSnap) => {
+          fetchedNotices.push({ id: docSnap.id, ...docSnap.data() } as Notice);
         });
-        
-        // Sort pinned first
-        fetchedNotices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
-        setNotices(fetchedNotices);
-      } catch (error) {
-        // Fallback to default notices on permission error or offline
-        setNotices([
-          {
-            id: 'default-notice-1',
-            title: 'Admission Open for Session 2026-27 (Std. I to XII)',
-            date: new Date().toISOString().split('T')[0],
-            type: 'Admissions',
-            priority: 'Important',
-            isPinned: true,
-            details: 'Applications for admission to Academic Session 2026-27 are now open for both Offline Physical Classes at Bhawani Chhapar, Deoria campus and Online Live Batches. Visit the admission portal to apply online.'
-          },
-          {
-            id: 'default-notice-2',
-            title: 'Suryoday Competition Classes - New Batch Timetable',
-            date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0],
-            type: 'Examinations',
-            priority: 'Normal',
-            isPinned: true,
-            details: 'New batches for SSC, UP Police, Railway, and Army competitive exams commence from next Monday. Special morning and evening shifts available.'
-          },
-          {
-            id: 'default-notice-3',
-            title: 'Computer Training Center - CCC & ADCA Registration',
-            date: new Date(Date.now() - 86400000 * 4).toISOString().split('T')[0],
-            type: 'General',
-            priority: 'Normal',
-            isPinned: false,
-            details: 'Enrollments for NIELIT CCC, ADCA, DCA, and Tally Prime professional computer courses are open with 100% practical lab training.'
+
+        // Sort pinned first, then by date descending
+        fetchedNotices.sort((a, b) => {
+          if (Boolean(b.isPinned) !== Boolean(a.isPinned)) {
+            return b.isPinned ? 1 : -1;
           }
-        ]);
-      } finally {
+          return (b.date || '').localeCompare(a.date || '');
+        });
+
+        setNotices(fetchedNotices);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to notices in real time:', error);
+        setNotices([]);
         setLoading(false);
       }
-    };
-    fetchNotices();
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  // Compute dynamic subject list from notices
+  // Compute dynamic subject list from actual notices
   const dynamicSubjects = ['All', ...Array.from(new Set(
     ['Academics', 'Examinations', 'Admissions', 'Events', 'Circulars', 'Sports', 'General',
      ...notices.map(n => n.type).filter(Boolean)]
@@ -167,13 +148,13 @@ export function NoticesPage() {
           </div>
         </div>
 
-        {/* Dedicated Admission Status Section */}
-        {activeCampaign && activeCampaign.isActive ? (
+        {/* Dedicated Admission Status Section - Only displayed if active campaign exists in Firestore */}
+        {activeCampaign && activeCampaign.isActive && (
           <div className="mb-8 p-6 bg-gradient-to-r from-crhs-navy via-slate-900 to-crhs-navy text-white rounded-2xl border-2 border-crhs-gold shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-2 max-w-2xl">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-widest bg-crhs-gold text-crhs-navy px-3 py-1 rounded-full flex items-center gap-1 shadow">
-                  <Sparkles className="w-3.5 h-3.5" /> 🔥 ADMISSION OPEN
+                  <Sparkles className="w-3.5 h-3.5" /> ADMISSION OPEN
                 </span>
                 <span className="text-xs font-bold text-crhs-gold uppercase tracking-wider">
                   Academic Session {activeCampaign.academicYear}
@@ -200,40 +181,25 @@ export function NoticesPage() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
-        ) : (
-          <div className="mb-8 p-5 bg-slate-100 border-2 border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-700 px-2.5 py-0.5 border border-slate-300 rounded flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-slate-500" /> [CLOSED]
-                </span>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Official Status</span>
-              </div>
-              <h3 className="text-base font-black uppercase text-crhs-navy">
-                Admissions Currently Closed
-              </h3>
-              <p className="text-xs text-slate-600 font-medium">
-                Online admission applications are currently closed. Check back for upcoming session announcements.
-              </p>
-            </div>
-            <Link to="/contact">
-              <Button variant="outline" size="sm" className="text-xs uppercase font-bold border-slate-300">
-                Contact Office
-              </Button>
-            </Link>
-          </div>
         )}
 
         {/* Notice List */}
         {loading ? (
-          <div className="text-center py-20">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 animate-pulse">Loading notices & circulars...</p>
+          <div className="text-center py-20 flex flex-col items-center justify-center gap-3">
+            <Bell className="w-8 h-8 text-crhs-gold animate-bounce" />
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 animate-pulse">Loading notices & circulars in real time...</p>
           </div>
         ) : filteredNotices.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50 border-2 border-slate-200 space-y-3 p-8">
+          <div className="text-center py-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl space-y-3 p-8">
             <Bell className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-bold uppercase text-crhs-navy">No notices match your criteria</h3>
-            <p className="text-xs text-slate-500">Try selecting a different subject or clearing your search phrase.</p>
+            <h3 className="text-lg font-bold uppercase text-crhs-navy">
+              {notices.length === 0 ? "No notices published yet" : "No notices match your filter"}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {notices.length === 0 
+                ? "Official notices and circulars will be displayed here in real time as soon as they are published." 
+                : "Try selecting a different subject or clearing your search phrase."}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

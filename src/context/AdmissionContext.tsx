@@ -1,4 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDocs, 
+  query, 
+  where, 
+  writeBatch 
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export interface AdmissionCampaign {
   id: string;
@@ -14,15 +27,17 @@ export interface AdmissionCampaign {
 interface AdmissionContextType {
   campaigns: AdmissionCampaign[];
   activeCampaign: AdmissionCampaign | null;
-  addCampaign: (campaign: Omit<AdmissionCampaign, 'id' | 'createdAt'>) => void;
-  updateCampaign: (id: string, updates: Partial<AdmissionCampaign>) => void;
-  deleteCampaign: (id: string) => void;
-  toggleCampaignStatus: (id: string, isActive: boolean) => void;
+  loading: boolean;
+  addCampaign: (campaign: Omit<AdmissionCampaign, 'id' | 'createdAt'>) => Promise<void> | void;
+  updateCampaign: (id: string, updates: Partial<AdmissionCampaign>) => Promise<void> | void;
+  deleteCampaign: (id: string) => Promise<void> | void;
+  toggleCampaignStatus: (id: string, isActive: boolean) => Promise<void> | void;
 }
 
 const AdmissionContext = createContext<AdmissionContextType>({
   campaigns: [],
   activeCampaign: null,
+  loading: true,
   addCampaign: () => {},
   updateCampaign: () => {},
   deleteCampaign: () => {},
@@ -30,110 +45,141 @@ const AdmissionContext = createContext<AdmissionContextType>({
 });
 
 export const AdmissionProvider = ({ children }: { children: React.ReactNode }) => {
-  const [campaigns, setCampaigns] = useState<AdmissionCampaign[]>(() => {
-    try {
-      const saved = localStorage.getItem('crhs_admission_campaigns');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Failed to parse admission campaigns from localStorage", e);
-    }
-    const defaultCampaign: AdmissionCampaign = {
-      id: 'campaign-2026-2027',
-      isActive: true,
-      title: 'Online Admissions 2026-27',
-      academicYear: '2026-2027',
-      startDate: '2026-04-01',
-      endDate: '2026-08-31',
-      description: '${schoolConfig.schoolName}, ${schoolConfig.location.address} (${schoolConfig.location.state}) invites online applications for Std I to Std XII for the academic session 2026-2027.',
-      createdAt: Date.now()
-    };
-    localStorage.setItem('crhs_admission_campaigns', JSON.stringify([defaultCampaign]));
-    return [defaultCampaign];
-  });
+  const [campaigns, setCampaigns] = useState<AdmissionCampaign[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const saveCampaigns = (newCampaigns: AdmissionCampaign[]) => {
-    setCampaigns(newCampaigns);
-    localStorage.setItem('crhs_admission_campaigns', JSON.stringify(newCampaigns));
-  };
-
-  const addCampaign = (campaignData: Omit<AdmissionCampaign, 'id' | 'createdAt'>) => {
-    const newCampaign: AdmissionCampaign = {
-      ...campaignData,
-      id: Math.random().toString(36).substr(2, 9),
-      createdAt: Date.now(),
-      isActive: campaignData.isActive
-    };
-    
-    let updatedCampaigns = [...campaigns, newCampaign];
-    if (newCampaign.isActive) {
-      // Deactivate all others
-      updatedCampaigns = updatedCampaigns.map(c => 
-        c.id === newCampaign.id ? c : { ...c, isActive: false }
-      );
-    }
-    
-    saveCampaigns(updatedCampaigns);
-  };
-
-  const updateCampaign = (id: string, updates: Partial<AdmissionCampaign>) => {
-    let updatedCampaigns = campaigns.map(c => 
-      c.id === id ? { ...c, ...updates } : c
-    );
-    
-    if (updates.isActive) {
-      // Deactivate all others if this one is made active
-      updatedCampaigns = updatedCampaigns.map(c => 
-        c.id === id ? c : { ...c, isActive: false }
-      );
-    }
-    
-    saveCampaigns(updatedCampaigns);
-  };
-
-  const deleteCampaign = (id: string) => {
-    saveCampaigns(campaigns.filter(c => c.id !== id));
-  };
-
-  const toggleCampaignStatus = (id: string, isActive: boolean) => {
-    let updatedCampaigns = campaigns;
-    if (isActive) {
-      updatedCampaigns = updatedCampaigns.map(c => ({
-        ...c,
-        isActive: c.id === id
-      }));
-    } else {
-      updatedCampaigns = updatedCampaigns.map(c => 
-        c.id === id ? { ...c, isActive: false } : c
-      );
-    }
-    saveCampaigns(updatedCampaigns);
-  };
-
+  // Real-time listener for admission campaigns in Firebase Firestore
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'crhs_admission_campaigns' && e.newValue) {
-        try {
-          setCampaigns(JSON.parse(e.newValue));
-        } catch (e) {}
+    // Clean up any legacy dummy campaigns from localStorage
+    try {
+      localStorage.removeItem('crhs_admission_campaigns');
+    } catch (e) {
+      // ignore
+    }
+
+    const campaignsRef = collection(db, 'campaigns');
+    const unsubscribe = onSnapshot(
+      campaignsRef,
+      (snapshot) => {
+        const items: AdmissionCampaign[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          items.push({
+            id: docSnap.id,
+            isActive: Boolean(data.isActive),
+            title: data.title || '',
+            academicYear: data.academicYear || '',
+            startDate: data.startDate || '',
+            endDate: data.endDate || '',
+            description: data.description || '',
+            createdAt: Number(data.createdAt) || 0
+          });
+        });
+
+        // Sort descending by creation date
+        items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setCampaigns(items);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error in real-time campaigns listener:', error);
+        setCampaigns([]);
+        setLoading(false);
       }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  const activeCampaign = campaigns.find(c => c.isActive) || null;
+  const addCampaign = async (campaignData: Omit<AdmissionCampaign, 'id' | 'createdAt'>) => {
+    try {
+      if (campaignData.isActive) {
+        // Deactivate all existing active campaigns first
+        const activeSnap = await getDocs(query(collection(db, 'campaigns'), where('isActive', '==', true)));
+        if (!activeSnap.empty) {
+          const batch = writeBatch(db);
+          activeSnap.forEach((d) => {
+            batch.update(doc(db, 'campaigns', d.id), { isActive: false });
+          });
+          await batch.commit();
+        }
+      }
+
+      await addDoc(collection(db, 'campaigns'), {
+        ...campaignData,
+        createdAt: Date.now()
+      });
+    } catch (e) {
+      console.error('Failed to add campaign to Firebase:', e);
+    }
+  };
+
+  const updateCampaign = async (id: string, updates: Partial<AdmissionCampaign>) => {
+    try {
+      if (updates.isActive) {
+        // Deactivate any other active campaigns
+        const activeSnap = await getDocs(query(collection(db, 'campaigns'), where('isActive', '==', true)));
+        if (!activeSnap.empty) {
+          const batch = writeBatch(db);
+          activeSnap.forEach((d) => {
+            if (d.id !== id) {
+              batch.update(doc(db, 'campaigns', d.id), { isActive: false });
+            }
+          });
+          await batch.commit();
+        }
+      }
+
+      await updateDoc(doc(db, 'campaigns', id), updates);
+    } catch (e) {
+      console.error('Failed to update campaign in Firebase:', e);
+    }
+  };
+
+  const deleteCampaign = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'campaigns', id));
+    } catch (e) {
+      console.error('Failed to delete campaign from Firebase:', e);
+    }
+  };
+
+  const toggleCampaignStatus = async (id: string, isActive: boolean) => {
+    try {
+      if (isActive) {
+        // If activating, deactivate others
+        const activeSnap = await getDocs(query(collection(db, 'campaigns'), where('isActive', '==', true)));
+        if (!activeSnap.empty) {
+          const batch = writeBatch(db);
+          activeSnap.forEach((d) => {
+            if (d.id !== id) {
+              batch.update(doc(db, 'campaigns', d.id), { isActive: false });
+            }
+          });
+          await batch.commit();
+        }
+      }
+
+      await updateDoc(doc(db, 'campaigns', id), { isActive });
+    } catch (e) {
+      console.error('Failed to toggle campaign status in Firebase:', e);
+    }
+  };
+
+  const activeCampaign = campaigns.find((c) => c.isActive) || null;
 
   return (
-    <AdmissionContext.Provider value={{ 
-      campaigns, 
-      activeCampaign, 
-      addCampaign, 
-      updateCampaign, 
-      deleteCampaign,
-      toggleCampaignStatus
-    }}>
+    <AdmissionContext.Provider
+      value={{
+        campaigns,
+        activeCampaign,
+        loading,
+        addCampaign,
+        updateCampaign,
+        deleteCampaign,
+        toggleCampaignStatus,
+      }}
+    >
       {children}
     </AdmissionContext.Provider>
   );

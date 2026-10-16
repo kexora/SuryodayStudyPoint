@@ -20,7 +20,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.gallery': 'Gallery',
     'nav.notices': 'Notices',
     'nav.contact': 'Contact Us',
-    'nav.login': 'Login',
+    'nav.login': 'Sign In',
+    'nav.logout': 'Sign Out',
     'nav.apply_online': 'Apply Online',
     'nav.tagline': 'Online & Offline Coaching • Computer Classes',
 
@@ -217,7 +218,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.gallery': 'गैलरी',
     'nav.notices': 'सूचनाएं',
     'nav.contact': 'संपर्क करें',
-    'nav.login': 'लॉगिन',
+    'nav.login': 'साइन इन',
+    'nav.logout': 'साइन आउट',
     'nav.apply_online': 'ऑनलाइन प्रवेश लें',
     'nav.tagline': 'ऑनलाइन एवं ऑफलाइन कोचिंग • कंप्यूटर क्लास',
 
@@ -453,8 +455,22 @@ export const useLanguage = () => useContext(LanguageContext);
 /**
  * Reusable Header/Nav Language Toggle Button Component
  */
-export const LanguageSwitcher: React.FC<{ className?: string, variant?: 'pill' | 'button' | 'compact' }> = ({ className = '', variant = 'pill' }) => {
+export const LanguageSwitcher: React.FC<{ className?: string, variant?: 'pill' | 'button' | 'compact' | 'icon' }> = ({ className = '', variant = 'pill' }) => {
   const { language, toggleLanguage } = useLanguage();
+
+  if (variant === 'icon') {
+    return (
+      <button
+        onClick={toggleLanguage}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 hover:bg-amber-100 text-crhs-navy text-xs font-bold transition-all duration-200 border border-slate-200 shadow-sm active:scale-95 ${className}`}
+        title={language === 'en' ? 'Switch to Hindi (हिंदी)' : 'Switch to English'}
+        aria-label="Switch Language"
+      >
+        <Languages className="w-4 h-4 text-amber-600 shrink-0" />
+        <span className="text-[11px] font-black leading-none">{language === 'en' ? 'हिंदी' : 'EN'}</span>
+      </button>
+    );
+  }
 
   if (variant === 'compact') {
     return (
