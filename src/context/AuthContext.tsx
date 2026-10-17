@@ -47,34 +47,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserData = async (firebaseUser: User) => {
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Firestore user fetch timeout")), 3500)
-      );
-
-      const userSnap = await Promise.race([
-        getDoc(userRef),
-        timeoutPromise
-      ]) as any;
+      
+      // Attempt to fetch from Firestore without aggressive failing timeout
+      const userSnap = await getDoc(userRef).catch(() => null);
 
       if (userSnap && userSnap.exists && userSnap.exists()) {
         const data = userSnap.data() as UserData;
-        // Safety check: ensure only authorized email can hold super admin role
         const cleanEmail = (firebaseUser.email || data.email || '').toLowerCase().trim();
         const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
         
         let validatedRole = data.role;
         if ((data.role === '__kx_0x1' || data.role === '__kx_0x2') && !isAuthorizedAdmin) {
-          // Demote any non-authorized user to student to prevent privilege escalation
           validatedRole = '__kx_0x4';
           data.role = '__kx_0x4';
           setDoc(userRef, { role: '__kx_0x4' }, { merge: true }).catch(() => {});
         }
 
-        setUserData({ ...data, role: validatedRole });
-        localStorage.setItem('secure_user_data', encryptData({ ...data, role: validatedRole }));
+        const finalData = { ...data, role: validatedRole };
+        setUserData(finalData);
+        localStorage.setItem('secure_user_data', encryptData(finalData));
       } else {
+        // If not in firestore yet, check if we have local cache or create new
+        const localEnc = localStorage.getItem('secure_user_data');
+        if (localEnc) {
+          try {
+            const cached = decryptData(localEnc);
+            if (cached && cached.uid === firebaseUser.uid) {
+              setUserData(cached);
+              return;
+            }
+          } catch (e) {}
+        }
+
         const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
-        // Strictly only designated admin email gets Super Admin; all other users get Student role by default
         const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
         const newUser: UserData = {
           uid: firebaseUser.uid,
@@ -82,13 +87,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: firebaseUser.email,
           name: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
           fullName: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
+          signupCompleted: true,
         };
-        await setDoc(userRef, newUser).catch(() => {});
+        await setDoc(userRef, newUser, { merge: true }).catch(() => {});
         setUserData(newUser);
         localStorage.setItem('secure_user_data', encryptData(newUser));
       }
     } catch (error: any) {
-      console.error("Firestore error loading user profile:", error);
+      console.warn("Firestore fetch notice (using local cache):", error);
+      const localEnc = localStorage.getItem('secure_user_data');
+      if (localEnc) {
+        try {
+          const cached = decryptData(localEnc);
+          if (cached) {
+            setUserData(cached);
+            return;
+          }
+        } catch (e) {}
+      }
       const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
       const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
       const fallbackData: UserData = {
@@ -96,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: isAuthorizedAdmin ? '__kx_0x1' : '__kx_0x4',
         email: firebaseUser.email,
         name: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
+        signupCompleted: true,
       };
       setUserData(fallbackData);
       localStorage.setItem('secure_user_data', encryptData(fallbackData));

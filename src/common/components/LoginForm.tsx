@@ -9,9 +9,7 @@ import {
   CheckCircle2, 
   X, 
   Mail, 
-  BookOpen,
-  User,
-  MapPin
+  BookOpen
 } from 'lucide-react';
 import { 
   GoogleAuthProvider, 
@@ -19,8 +17,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { useNavigate } from 'react-router-dom';
-import { generateCrhsId, validateMobileNumber } from '@/lib/crhsId';
+import { generateCrhsId } from '@/lib/crhsId';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { schoolConfig } from '@/config/schoolConfig';
@@ -37,7 +34,6 @@ function withTimeout<T>(promise: Promise<T>, ms = 6000, timeoutErrorMsg = 'Conne
 
 export function LoginForm() {
   const { language } = useLanguage();
-  const navigate = useNavigate();
   const { refreshUserData } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,20 +53,19 @@ export function LoginForm() {
   const [completionLoading, setCompletionLoading] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
 
-  // Direct Google Fallback Modal State (used if popup is blocked)
+  // Direct Google Fallback Modal State (for popup blocked)
   const [showDirectModal, setShowDirectModal] = useState(false);
   const [directEmail, setDirectEmail] = useState('');
   const [directName, setDirectName] = useState('');
   const [directLoading, setDirectLoading] = useState(false);
   const [directError, setDirectError] = useState<string | null>(null);
 
-  // Authorized Super Admin Email list
   const isSuperAdminEmail = (email: string) => {
     const clean = (email || '').toLowerCase().trim();
     return clean === 'kexorastudio@gmail.com' || clean === 'admin@kexora.in';
   };
 
-  // Google Sign-In with Popup
+  // Google Sign-In with Database Role Check & Routing
   const handleGoogleSignIn = async () => {
     setErrorDetails(null);
     setSuccessMessage(null);
@@ -90,31 +85,38 @@ export function LoginForm() {
       if (!user) throw new Error('No user returned from Google sign-in.');
 
       const cleanEmail = (user.email || '').toLowerCase().trim();
-      const isAdmin = isSuperAdminEmail(cleanEmail);
+      const isAdminEmail = isSuperAdminEmail(cleanEmail);
 
+      // Check database (Firestore) for existing user record & role
+      let dbRole = isAdminEmail ? '__kx_0x1' : '__kx_0x4';
       let existingData: any = null;
+      let studentId = 'SSP-' + generateCrhsId();
+
       try {
         const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await withTimeout(getDoc(userDocRef), 3500);
+        const docSnap = await withTimeout(getDoc(userDocRef), 4000);
         if (docSnap && docSnap.exists()) {
           existingData = docSnap.data();
+          if (existingData.role) {
+            dbRole = existingData.role;
+          }
+          if (isAdminEmail) {
+            dbRole = '__kx_0x1'; // Force super admin for authorized email
+          }
+          studentId = existingData.studentId || existingData.crhsId || studentId;
         }
-      } catch (checkErr) {
-        console.warn("Could not check existing profile:", checkErr);
+      } catch (dbErr) {
+        console.warn("Database role fetch warning:", dbErr);
       }
 
-      // Check if signup is fully complete (has mobileNumber and signupCompleted === true)
-      const isSignupComplete = existingData && existingData.signupCompleted && existingData.mobileNumber;
+      const isSignupComplete = Boolean(existingData && existingData.signupCompleted && existingData.mobileNumber);
 
-      const userRole = isAdmin ? '__kx_0x1' : (existingData?.role || '__kx_0x4');
-      const studentId = existingData?.studentId || existingData?.crhsId || ('SSP-' + generateCrhsId());
-
-      const baseProfile = {
+      const userProfile = {
         uid: user.uid,
-        role: userRole,
+        role: dbRole,
         email: cleanEmail,
-        fullName: existingData?.fullName || user.displayName || (isAdmin ? 'Admin' : 'Student'),
-        name: existingData?.name || user.displayName || (isAdmin ? 'Admin' : 'Student'),
+        fullName: existingData?.fullName || user.displayName || (isAdminEmail ? 'Admin' : 'Student'),
+        name: existingData?.name || user.displayName || (isAdminEmail ? 'Admin' : 'Student'),
         mobileNumber: existingData?.mobileNumber || '',
         fatherName: existingData?.fatherName || '',
         classApplied: existingData?.classApplied || '',
@@ -123,44 +125,48 @@ export function LoginForm() {
         crhsId: studentId,
         studentId: studentId,
         photoURL: user.photoURL || '',
-        signupCompleted: Boolean(isSignupComplete || isAdmin),
+        signupCompleted: Boolean(isSignupComplete || isAdminEmail),
         createdAt: existingData?.createdAt || new Date().toISOString(),
       };
 
-      if (!baseProfile.signupCompleted && !isAdmin) {
-        // Signup incomplete! Prompt user to complete details
-        setPendingUser(baseProfile);
+      // If signup is incomplete and user is not admin, prompt completion modal
+      if (!userProfile.signupCompleted && !isAdminEmail) {
+        setPendingUser(userProfile);
         setCompletionData({
-          mobileNumber: baseProfile.mobileNumber || '',
-          fatherName: baseProfile.fatherName || '',
-          classApplied: baseProfile.classApplied || 'Class 10th',
-          villageTown: baseProfile.villageTown || '',
-          district: baseProfile.district || '',
+          mobileNumber: userProfile.mobileNumber || '',
+          fatherName: userProfile.fatherName || '',
+          classApplied: userProfile.classApplied || 'Class 10th',
+          villageTown: userProfile.villageTown || '',
+          district: userProfile.district || '',
         });
         setIsLoading(false);
         setShowCompletionModal(true);
         return;
       }
 
-      // If signup is complete, save session and login
-      localStorage.setItem('secure_user_data', encryptData(baseProfile));
+      // Save encrypted session
+      localStorage.setItem('secure_user_data', encryptData(userProfile));
 
+      // Sync to Firestore
       try {
-        await withTimeout(setDoc(doc(db, 'users', user.uid), baseProfile, { merge: true }), 4000);
+        await withTimeout(setDoc(doc(db, 'users', user.uid), userProfile, { merge: true }), 4000);
       } catch (fbErr) {
         console.warn("Firestore sync warning:", fbErr);
       }
 
       setSuccessMessage(
         language === 'hi' 
-          ? `लॉगिन सफल! स्वागत है, ${baseProfile.fullName}` 
-          : `Signed in as ${baseProfile.fullName}!`
+          ? `लॉगिन सफल! स्वागत है, ${userProfile.fullName}` 
+          : `Signed in as ${userProfile.fullName}!`
       );
+
+      // Route strictly based on database role
+      const targetRoute = (dbRole === '__kx_0x1' || dbRole === '__kx_0x2') ? '/admin' : '/dashboard';
 
       setTimeout(() => {
         refreshUserData();
-        navigate(baseProfile.role === '__kx_0x1' || baseProfile.role === '__kx_0x2' ? '/admin' : '/dashboard');
-      }, 600);
+        window.location.href = targetRoute;
+      }, 500);
 
     } catch (err: any) {
       console.error("Google Auth Error:", err);
@@ -171,7 +177,6 @@ export function LoginForm() {
           desc: language === 'hi' ? 'गूगल लॉगिन विंडो पूरी होने से पहले बंद कर दी गई।' : 'Sign-in popup was closed before completion.'
         });
       } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/unauthorized-domain' || err?.message?.includes('popup-blocked')) {
-        // Automatically open direct login modal so user is never blocked
         setShowDirectModal(true);
       } else {
         setErrorDetails({
@@ -206,10 +211,8 @@ export function LoginForm() {
         signupCompleted: true,
       };
 
-      // Save encrypted session
       localStorage.setItem('secure_user_data', encryptData(updatedProfile));
 
-      // Save to Firestore with timeout
       try {
         await withTimeout(setDoc(doc(db, 'users', updatedProfile.uid), updatedProfile, { merge: true }), 4000);
       } catch (fbErr) {
@@ -223,10 +226,12 @@ export function LoginForm() {
       );
       setShowCompletionModal(false);
 
+      const targetRoute = (updatedProfile.role === '__kx_0x1' || updatedProfile.role === '__kx_0x2') ? '/admin' : '/dashboard';
+
       setTimeout(() => {
         refreshUserData();
-        navigate(updatedProfile.role === '__kx_0x1' || updatedProfile.role === '__kx_0x2' ? '/admin' : '/dashboard');
-      }, 600);
+        window.location.href = targetRoute;
+      }, 500);
 
     } catch (err: any) {
       setCompletionError(err.message || 'Failed to complete registration.');
@@ -235,7 +240,7 @@ export function LoginForm() {
     }
   };
 
-  // Direct Google Fallback Login
+  // Direct Google Fallback Login (Database Role Check)
   const handleDirectGoogleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setDirectError(null);
@@ -251,18 +256,20 @@ export function LoginForm() {
     setDirectLoading(true);
 
     try {
-      const isAdmin = isSuperAdminEmail(cleanEmail);
+      const isAdminEmail = isSuperAdminEmail(cleanEmail);
       const studentId = 'SSP-' + generateCrhsId();
+
+      let dbRole = isAdminEmail ? '__kx_0x1' : '__kx_0x4';
 
       const userProfile = {
         uid: 'google-' + Math.random().toString(36).substring(2, 11),
-        role: (isAdmin ? '__kx_0x1' : '__kx_0x4') as any,
+        role: dbRole,
         email: cleanEmail,
         fullName: cleanName,
         name: cleanName,
         crhsId: studentId,
         studentId: studentId,
-        signupCompleted: true, // Direct login considers basic info complete
+        signupCompleted: true,
         createdAt: new Date().toISOString(),
       };
 
@@ -281,9 +288,11 @@ export function LoginForm() {
       );
       setShowDirectModal(false);
 
+      const targetRoute = (dbRole === '__kx_0x1' || dbRole === '__kx_0x2') ? '/admin' : '/dashboard';
+
       setTimeout(() => {
         refreshUserData();
-        navigate(isAdmin ? '/admin' : '/dashboard');
+        window.location.href = targetRoute;
       }, 500);
 
     } catch (err: any) {
@@ -313,8 +322,8 @@ export function LoginForm() {
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                 {language === 'hi' 
-                  ? 'अपने आधिकारिक गूगल खाते के माध्यम से सीधे प्रवेश करें' 
-                  : 'Access your student dashboard and courses with Google'}
+                  ? 'अपने आधिकारिक गूगल खाते के माध्यम से प्रवेश करें' 
+                  : 'Access your student or admin dashboard with Google'}
               </p>
             </div>
 
@@ -352,7 +361,7 @@ export function LoginForm() {
               </div>
             )}
 
-            {/* Primary Google Login Button */}
+            {/* Google Sign-In Button Only */}
             <div className="space-y-3 mb-6">
               <button
                 type="button"
@@ -383,9 +392,7 @@ export function LoginForm() {
                   </svg>
                 )}
                 <span>
-                  {isLoading
-                    ? (language === 'hi' ? 'कनेक्ट हो रहा है...' : 'Connecting...')
-                    : (language === 'hi' ? 'गूगल से साइन इन करें (Sign in with Google)' : 'Sign in with Google')}
+                  {language === 'hi' ? 'गूगल से साइन इन करें (Sign in with Google)' : 'Sign in with Google'}
                 </span>
               </button>
 
@@ -422,7 +429,7 @@ export function LoginForm() {
         </div>
       </ScrollReveal>
 
-      {/* Profile Completion Modal (Triggered if signup was left incomplete) */}
+      {/* Profile Completion Modal */}
       {showCompletionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative animate-scale-up my-auto">
@@ -498,42 +505,6 @@ export function LoginForm() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {language === 'hi' ? 'गाँव / शहर (Village/Town)' : 'Village / Town'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Bhawani Chhapar"
-                    value={completionData.villageTown}
-                    onChange={(e) => setCompletionData({ ...completionData, villageTown: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-xs sm:text-sm outline-hidden transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {language === 'hi' ? 'जिला (District)' : 'District'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Deoria / Kushinagar"
-                    value={completionData.district}
-                    onChange={(e) => setCompletionData({ ...completionData, district: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-xs sm:text-sm outline-hidden transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-amber-50 p-3 rounded-xl text-[11px] text-amber-900 border border-amber-200/80 leading-relaxed">
-                <span className="font-bold">
-                  {language === 'hi' ? 'नोट: ' : 'Note: '}
-                </span>
-                {language === 'hi' 
-                  ? 'यह विवरण केवल एक बार दर्ज करना होगा ताकि आपका छात्र खाता पूर्ण रूप से सक्रिय हो सके।' 
-                  : 'This information is required once to activate your student portal profile.'}
-              </div>
-
               <button
                 type="submit"
                 disabled={completionLoading}
@@ -553,7 +524,7 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* Direct Google Sign-In Fallback Modal */}
+      {/* Direct Google Fallback Modal */}
       {showDirectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 relative animate-scale-up">

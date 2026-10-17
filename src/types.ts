@@ -19,6 +19,7 @@ export interface UserData {
   classApplied?: string;
   courseCategory?: string;
   createdAt?: string;
+  signupCompleted?: boolean;
 }
 
 export interface RegistrationFormData {
