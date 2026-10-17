@@ -243,7 +243,7 @@ export function AdminLayout() {
         </motion.div>
 
         {/* Main Content View */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

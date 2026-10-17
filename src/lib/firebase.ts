@@ -2,32 +2,31 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { initializeFirestore, memoryLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import firebaseAppletConfig from "../../firebase-applet-config.json";
 
 // @ts-ignore
 const env = import.meta.env || {};
 
-// Check if user has set custom Firebase configuration (e.g. suryodayeducation)
-let customConfig: any = null;
+// User's official Firebase configuration for Suryoday Education
+export const firebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY || "AIzaSyATm8eBmNQPH3NtX4Cf8ipqNueYOpDGi3A",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "suryodayeducation.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || "suryodayeducation",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "suryodayeducation.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1050978757719",
+  appId: env.VITE_FIREBASE_APP_ID || "1:1050978757719:web:2ce7e5aa11e5133ca5c712",
+};
+
+// Clear any stale local cache pointing to old temporary project
 if (typeof window !== 'undefined') {
   try {
     const saved = localStorage.getItem('custom_firebase_config');
-    if (saved) {
-      customConfig = JSON.parse(saved);
+    if (saved && (saved.includes('gen-lang-client') || !saved.includes('suryodayeducation'))) {
+      localStorage.removeItem('custom_firebase_config');
     }
   } catch (e) {
-    console.warn("Failed to parse custom_firebase_config:", e);
+    // ignore
   }
 }
-
-export const firebaseConfig = {
-  apiKey: customConfig?.apiKey || env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
-  authDomain: customConfig?.authDomain || env.VITE_FIREBASE_AUTH_DOMAIN || (customConfig?.projectId ? `${customConfig.projectId}.firebaseapp.com` : firebaseAppletConfig.authDomain),
-  projectId: customConfig?.projectId || env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
-  storageBucket: customConfig?.storageBucket || env.VITE_FIREBASE_STORAGE_BUCKET || (customConfig?.projectId ? `${customConfig.projectId}.firebasestorage.app` : firebaseAppletConfig.storageBucket),
-  messagingSenderId: customConfig?.messagingSenderId || env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
-  appId: customConfig?.appId || env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
-};
 
 export function saveCustomFirebaseConfig(config: any) {
   if (typeof window !== 'undefined') {

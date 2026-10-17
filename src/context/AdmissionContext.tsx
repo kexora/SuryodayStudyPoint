@@ -82,7 +82,7 @@ export const AdmissionProvider = ({ children }: { children: React.ReactNode }) =
         setLoading(false);
       },
       (error) => {
-        console.error('Error in real-time campaigns listener:', error);
+        console.warn('Admission campaigns listener notice:', error?.message || error);
         setCampaigns([]);
         setLoading(false);
       }

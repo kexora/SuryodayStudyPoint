@@ -22,7 +22,7 @@ export function ProgramsOverview() {
       setCourses(list);
       setLoading(false);
     }, (err) => {
-      console.error('Error fetching courses in ProgramsOverview:', err);
+      console.warn('Courses listener notice in ProgramsOverview:', err?.message || err);
       setCourses([]);
       setLoading(false);
     });

@@ -1,11 +1,11 @@
 {
-  "projectId": "gen-lang-client-0509205853",
-  "appId": "1:320268674435:web:3952c5a665e1927433c2b6",
-  "apiKey": "AIzaSyBQPlDTUCpQ7Mx2t7TPxEuZeJO7blsgAk4",
-  "authDomain": "gen-lang-client-0509205853.firebaseapp.com",
-  "storageBucket": "gen-lang-client-0509205853.firebasestorage.app",
-  "messagingSenderId": "320268674435",
+  "projectId": "suryodayeducation",
+  "appId": "1:1050978757719:web:2ce7e5aa11e5133ca5c712",
+  "apiKey": "AIzaSyATm8eBmNQPH3NtX4Cf8ipqNueYOpDGi3A",
+  "authDomain": "suryodayeducation.firebaseapp.com",
+  "storageBucket": "suryodayeducation.firebasestorage.app",
+  "messagingSenderId": "1050978757719",
   "measurementId": "",
-  "oAuthClientId": "320268674435-l8rksftq5gn7dsrmn5aj3nordmp99437.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

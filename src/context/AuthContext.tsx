@@ -125,9 +125,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (encryptedData) {
       try {
         const data = decryptData(encryptedData);
-        if (data) {
+        if (data && data.uid) {
           setUserData(data);
-          setUser({ uid: data.uid || 'local-user', email: data.email, displayName: data.name } as any);
+          setUser({
+            uid: data.uid,
+            email: data.email,
+            displayName: data.fullName || data.name,
+            photoURL: data.photoURL,
+          } as any);
         }
       } catch (e) {
         console.error("Error loading local auth cache", e);
@@ -135,13 +140,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
       if (firebaseUser) {
+        setUser(firebaseUser);
         await fetchUserData(firebaseUser);
       } else {
-        // Keep local user if active and offline, or clear if signed out explicitly
-        if (!localStorage.getItem('secure_user_data')) {
+        // If Firebase Auth has no current session, retain valid encrypted session
+        const enc = localStorage.getItem('secure_user_data');
+        if (enc) {
+          try {
+            const data = decryptData(enc);
+            if (data && data.uid) {
+              setUserData(data);
+              setUser({
+                uid: data.uid,
+                email: data.email,
+                displayName: data.fullName || data.name,
+                photoURL: data.photoURL,
+              } as any);
+            } else {
+              setUserData(null);
+              setUser(null);
+            }
+          } catch {
+            setUserData(null);
+            setUser(null);
+          }
+        } else {
           setUserData(null);
+          setUser(null);
         }
       }
       setLoading(false);
@@ -149,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 1500);
 
     return () => {
       unsubscribe();

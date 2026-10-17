@@ -72,7 +72,7 @@ export function NoticesPage() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to notices in real time:', error);
+        console.warn('NoticesPage listener notice:', error?.message || error);
         setNotices([]);
         setLoading(false);
       }

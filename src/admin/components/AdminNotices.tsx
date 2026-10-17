@@ -77,8 +77,8 @@ export function AdminNotices() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to notices in real time:', error);
-        setMessage({ text: 'Failed to load notices', type: 'error' });
+        console.warn('Admin notices listener notice:', error?.message || error);
+        setNotices([]);
         setLoading(false);
       }
     );

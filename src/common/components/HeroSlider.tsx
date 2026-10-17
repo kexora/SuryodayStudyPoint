@@ -39,7 +39,7 @@ export function HeroSlider() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to hero slides:', error);
+        console.warn('Hero slides listener notice (using defaults):', error);
         setDbSlides([]);
         setLoading(false);
       }

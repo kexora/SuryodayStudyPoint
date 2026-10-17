@@ -8,18 +8,21 @@ import { schoolConfig } from '@/config/schoolConfig';
 import { useLanguage } from '@/context/LanguageContext';
 
 export function Login() {
-  const { user, loading } = useAuth();
+  const { user, userData, role, loading } = useAuth();
   const { t, language } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!loading && user) {
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+    if (!loading && (user || userData)) {
+      const isAdmin = role === '__kx_0x1' || role === '__kx_0x2';
+      const defaultDest = isAdmin ? '/admin' : '/dashboard';
+      const requestedFrom = (location.state as any)?.from?.pathname;
+      const target = requestedFrom && requestedFrom !== '/login' ? requestedFrom : defaultDest;
+      navigate(target, { replace: true });
     }
-  }, [user, loading, navigate, location.state]);
+  }, [user, userData, role, loading, navigate, location.state]);
 
   const wasRedirected = !!(location.state as any)?.from;
 

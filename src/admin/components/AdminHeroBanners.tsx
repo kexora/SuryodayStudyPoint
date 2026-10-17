@@ -57,8 +57,8 @@ export function AdminHeroBanners() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to hero slides in real time:', error);
-        setMessage({ text: 'Error loading banners.', type: 'error' });
+        console.warn('Hero slides listener notice:', error?.message || error);
+        setSlides([]);
         setLoading(false);
       }
     );

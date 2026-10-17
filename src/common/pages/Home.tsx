@@ -31,11 +31,11 @@ export function Home() {
       <HeroSlider />
 
       {/* Welcome Section */}
-      <section className="py-16 md:py-24 bg-white relative overflow-hidden">
+      <section className="py-8 sm:py-14 md:py-20 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
             
-            <div className="order-2 lg:order-1 relative z-10">
+            <div className="order-1 lg:order-1 relative z-10">
               <ScrollReveal direction="up" delay={0.1}>
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-amber-100 text-amber-900 font-black text-xs uppercase tracking-widest rounded-full mb-4">
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
@@ -90,7 +90,7 @@ export function Home() {
               </ScrollReveal>
             </div>
 
-            <div className="order-1 lg:order-2">
+            <div className="order-2 lg:order-2">
               <ScrollReveal direction="left" delay={0.3} className="relative">
                 <div className="aspect-[4/3] bg-slate-200 overflow-hidden shadow-2xl relative z-10 border-4 border-white">
                   <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1200" alt="Suryoday Coaching Classroom & Online Study" className="w-full h-full object-cover" />

@@ -58,7 +58,7 @@ export function Academics() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error fetching courses from Firebase:', error);
+        console.warn('Academics courses fetch notice:', error?.message || error);
         setCourses([]);
         setLoading(false);
       }

@@ -52,7 +52,7 @@ export function NoticeBoard() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to notices in real time:', error);
+        console.warn('NoticeBoard listener notice:', error?.message || error);
         setNotices([]);
         setLoading(false);
       }
