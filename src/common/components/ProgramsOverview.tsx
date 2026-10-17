@@ -10,6 +10,7 @@ import { CourseItem } from '@/types';
 export function ProgramsOverview() {
   const { t } = useLanguage();
   const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'courses'), (snapshot) => {
@@ -19,19 +20,15 @@ export function ProgramsOverview() {
       });
       list.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
       setCourses(list);
+      setLoading(false);
     }, (err) => {
       console.error('Error fetching courses in ProgramsOverview:', err);
+      setCourses([]);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
-
-  const defaultPrograms = [
-    { id: '1', level: t('prog.p1_title'), grades: t('prog.p1_sub'), img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800', desc: t('prog.p1_desc'), isAdmissionOpen: true },
-    { id: '2', level: t('prog.p2_title'), grades: t('prog.p2_sub'), img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=800', desc: t('prog.p2_desc'), isAdmissionOpen: true },
-    { id: '3', level: t('prog.p3_title'), grades: t('prog.p3_sub'), img: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800', desc: t('prog.p3_desc'), isAdmissionOpen: false },
-    { id: '4', level: t('prog.p4_title'), grades: t('prog.p4_sub'), img: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800', desc: t('prog.p4_desc'), isAdmissionOpen: false },
-  ];
 
   const defaultImages = [
     'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800',
@@ -40,33 +37,39 @@ export function ProgramsOverview() {
     'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
   ];
 
-  const displayList = courses.length > 0 ? courses.slice(0, 4).map((c, i) => ({
+  // Strictly display only real courses existing in Firebase
+  const displayList = courses.slice(0, 4).map((c, i) => ({
     id: c.id,
     level: c.title,
     grades: c.target || (c.modes ? c.modes.join(' & ') : ''),
     img: c.imageUrl || defaultImages[i % defaultImages.length],
     desc: (c.highlights && c.highlights[0]) || c.description || c.target,
     isAdmissionOpen: c.isAdmissionOpen
-  })) : defaultPrograms;
+  }));
+
+  // If loading or no courses exist in Firebase, do not render fake items
+  if (!loading && displayList.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="py-16 md:py-24 bg-white relative border-t border-gray-100">
+    <section className="py-10 sm:py-16 md:py-20 bg-white relative border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal direction="up" delay={0.1}>
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <ScrollReveal direction="up" delay={0.08} blur={8}>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4 sm:gap-6">
             <div>
-              <span className="text-amber-600 font-black text-xs md:text-sm uppercase tracking-[0.2em] mb-4 block">{t('prog.badge')}</span>
-              <h2 className="text-3xl md:text-4xl font-black uppercase text-crhs-navy">{t('prog.title')}</h2>
+              <span className="text-amber-600 font-black text-xs md:text-sm uppercase tracking-[0.2em] mb-2 sm:mb-3 block">{t('prog.badge')}</span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase text-crhs-navy">{t('prog.title')}</h2>
             </div>
-            <Link to="/academics" className="group inline-flex items-center text-amber-600 font-bold uppercase tracking-wider text-sm hover:text-crhs-navy transition-colors mb-2">
-              {t('nav.academics')} <ArrowRight className="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+            <Link to="/academics" className="group inline-flex items-center text-amber-600 font-bold uppercase tracking-wider text-xs sm:text-sm hover:text-crhs-navy transition-colors mb-2">
+              {t('nav.academics')} <ArrowRight className="ml-1.5 w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </ScrollReveal>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {displayList.map((prog, idx) => (
-            <ScrollReveal key={prog.id || idx} direction="up" delay={0.1 * (idx + 1)}>
+            <ScrollReveal key={prog.id || idx} direction="up" delay={0.08 * (idx + 1)} blur={8}>
               <div className="group block relative overflow-hidden bg-slate-900 aspect-[4/5] sm:aspect-square lg:aspect-[4/5] border-t-4 border-amber-500 shadow-md">
                 <img src={prog.img} alt={prog.level} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-crhs-navy/95 via-crhs-navy/50 to-transparent" />

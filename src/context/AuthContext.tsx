@@ -58,17 +58,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (userSnap && userSnap.exists && userSnap.exists()) {
         const data = userSnap.data() as UserData;
-        setUserData(data);
-        localStorage.setItem('secure_user_data', encryptData(data));
+        // Safety check: ensure only authorized email can hold super admin role
+        const cleanEmail = (firebaseUser.email || data.email || '').toLowerCase().trim();
+        const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
+        
+        let validatedRole = data.role;
+        if ((data.role === '__kx_0x1' || data.role === '__kx_0x2') && !isAuthorizedAdmin) {
+          // Demote any non-authorized user to student to prevent privilege escalation
+          validatedRole = '__kx_0x4';
+          data.role = '__kx_0x4';
+          setDoc(userRef, { role: '__kx_0x4' }, { merge: true }).catch(() => {});
+        }
+
+        setUserData({ ...data, role: validatedRole });
+        localStorage.setItem('secure_user_data', encryptData({ ...data, role: validatedRole }));
       } else {
         const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
-        const isAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in' || cleanEmail.startsWith('admin@');
+        // Strictly only designated admin email gets Super Admin; all other users get Student role by default
+        const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
         const newUser: UserData = {
           uid: firebaseUser.uid,
-          role: isAdmin ? '__kx_0x1' : '__kx_0x4',
+          role: isAuthorizedAdmin ? '__kx_0x1' : '__kx_0x4',
           email: firebaseUser.email,
-          name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
-          fullName: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
+          name: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
+          fullName: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
         };
         await setDoc(userRef, newUser).catch(() => {});
         setUserData(newUser);
@@ -77,12 +90,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Firestore error loading user profile:", error);
       const cleanEmail = (firebaseUser.email || '').toLowerCase().trim();
-      const isAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in' || cleanEmail.startsWith('admin@');
+      const isAuthorizedAdmin = cleanEmail === 'kexorastudio@gmail.com' || cleanEmail === 'admin@kexora.in';
       const fallbackData: UserData = {
         uid: firebaseUser.uid,
-        role: isAdmin ? '__kx_0x1' : '__kx_0x4',
+        role: isAuthorizedAdmin ? '__kx_0x1' : '__kx_0x4',
         email: firebaseUser.email,
-        name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Student'),
+        name: firebaseUser.displayName || (isAuthorizedAdmin ? 'Admin' : 'Student'),
       };
       setUserData(fallbackData);
       localStorage.setItem('secure_user_data', encryptData(fallbackData));

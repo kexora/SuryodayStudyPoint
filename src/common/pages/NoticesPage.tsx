@@ -6,8 +6,19 @@ import { Button } from '@/common/components/ui/Button';
 import { Input } from '@/common/components/ui/Input';
 import { Modal } from '@/common/components/ui/Modal';
 import { 
-  Bell, Search, Filter, Calendar, FileText, Download, Pin, 
-  ChevronRight, ArrowLeft, Tag, AlertTriangle, Sparkles, GraduationCap, ArrowRight, Lock
+  Bell, 
+  Search, 
+  Calendar, 
+  FileText, 
+  Download, 
+  Pin, 
+  Sparkles, 
+  GraduationCap, 
+  ArrowRight, 
+  CheckCircle2, 
+  X,
+  Phone,
+  AlertCircle
 } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -30,7 +41,7 @@ interface Notice {
 
 export function NoticesPage() {
   const { activeCampaign } = useAdmission();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +49,7 @@ export function NoticesPage() {
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
-  // Real-time synchronization with Firestore notices collection
+  // Real-time synchronization directly with Firestore 'notices' collection
   useEffect(() => {
     const noticesRef = collection(db, 'notices');
     const unsubscribe = onSnapshot(
@@ -72,7 +83,7 @@ export function NoticesPage() {
 
   // Compute dynamic subject list from actual notices
   const dynamicSubjects = ['All', ...Array.from(new Set(
-    ['Academics', 'Examinations', 'Admissions', 'Events', 'Circulars', 'Sports', 'General',
+    ['Academics', 'Examinations', 'Admissions', 'Events', 'Circulars', 'General',
      ...notices.map(n => n.type).filter(Boolean)]
   ))];
 
@@ -86,248 +97,329 @@ export function NoticesPage() {
   });
 
   return (
-    <>
+    <div className="bg-slate-50 min-h-screen text-slate-800">
       <SEO 
-        title="Notice Board & Circulars" 
+        title="Notice Board & Circulars | Suryoday Study Point" 
         description={`Stay updated with the latest notices, circulars, exam schedules, academic announcements, and events at ${schoolConfig.schoolName}.`}
         keywords={`school notices, ${schoolConfig.schoolShortName} circulars, exam schedule, academic announcements, school board`}
       />
 
-      {/* Hero Section */}
-      <div className="bg-crhs-navy text-white py-16 md:py-20 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <ScrollReveal direction="up">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 bg-crhs-gold/20 rounded-full flex items-center justify-center">
-                <Bell className="w-7 h-7 text-crhs-gold" />
-              </div>
+      {/* Hero Section - Sleek, Theme-Consistent & Mobile-Optimized */}
+      <div className="bg-crhs-navy text-white py-10 sm:py-16 md:py-20 relative overflow-hidden border-b-4 border-amber-500">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 sm:w-96 h-72 sm:h-96 bg-amber-500/15 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-72 sm:w-96 h-72 sm:h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+          {/* Top Badge with Blur Reveal */}
+          <ScrollReveal direction="up" delay={0.05} blur={10}>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 mb-3 sm:mb-4">
+              <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>{language === 'hi' ? 'आधिकारिक सूचनाएं' : 'Official Circulars & Updates'}</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4">
+          </ScrollReveal>
+
+          {/* Heading with Blur Reveal */}
+          <ScrollReveal direction="up" delay={0.12} blur={10}>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-wider mb-3 sm:mb-4 text-white">
               {t('notices.title', 'Notice Board & Circulars')}
             </h1>
-            <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto font-medium">
-              {t('notices.desc')}
+          </ScrollReveal>
+
+          {/* Subtitle with Blur Reveal */}
+          <ScrollReveal direction="up" delay={0.18} blur={8}>
+            <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-2xl mx-auto font-normal sm:font-medium leading-relaxed px-2">
+              {t('notices.desc', 'Official announcements, examination schedules, batch timetables, and academic circulars.')}
             </p>
+          </ScrollReveal>
+
+          {/* Quick Category Chips for Mobile */}
+          <ScrollReveal direction="up" delay={0.24} blur={8}>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] sm:text-xs">
+              <span className="bg-white/10 backdrop-blur-xs text-amber-300 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                {language === 'hi' ? 'परीक्षा समय-सारणी' : 'Exam Schedules'}
+              </span>
+              <span className="bg-white/10 backdrop-blur-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5 font-medium">
+                <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
+                {language === 'hi' ? 'बैच एवं कक्षा सूचनाएं' : 'Batch Notices'}
+              </span>
+              <span className="bg-white/10 backdrop-blur-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5 font-medium">
+                <FileText className="w-3.5 h-3.5 text-purple-400" />
+                {language === 'hi' ? 'आधिकारिक परिपत्र' : 'Circulars'}
+              </span>
+            </div>
           </ScrollReveal>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="py-12 md:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Search & Subject Tabs */}
-        <div className="space-y-6 mb-10">
-          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+      <div className="py-6 sm:py-10 md:py-14 max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8">
+        
+        {/* Search & Subject Tabs Container */}
+        <ScrollReveal direction="up" delay={0.08} blur={8}>
+          <div className="space-y-4 mb-6 sm:mb-8 max-w-3xl mx-auto">
             {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <Input
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
                 type="text"
                 placeholder={t('notices.search', 'Search notices by keyword, title, or circular details...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 text-xs py-3"
+                className="w-full bg-white border border-slate-200/90 rounded-full pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-crhs-navy focus:border-transparent shadow-xs font-medium placeholder:text-slate-400 transition-all"
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Dynamic Subject Filter Pills */}
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center pt-1">
+              {dynamicSubjects.map(subj => (
+                <button
+                  key={subj}
+                  onClick={() => setSelectedSubject(subj)}
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-200 shrink-0 whitespace-nowrap active:scale-95 ${
+                    selectedSubject === subj 
+                      ? 'bg-crhs-navy text-white border border-crhs-navy shadow-xs ring-1 sm:ring-2 ring-crhs-navy/15' 
+                      : 'bg-white text-slate-600 border border-slate-200 hover:border-amber-300 hover:text-crhs-navy shadow-2xs'
+                  }`}
+                >
+                  {subj === 'All' ? (language === 'hi' ? 'सभी सूचनाएं' : 'All') : subj}
+                </button>
+              ))}
             </div>
           </div>
+        </ScrollReveal>
 
-          {/* Dynamic Subject Tabs */}
-          <div className="flex flex-wrap gap-2 justify-start sm:justify-center overflow-x-auto pb-2">
-            {dynamicSubjects.map(subj => (
-              <button
-                key={subj}
-                onClick={() => setSelectedSubject(subj)}
-                className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-2 transition-all ${
-                  selectedSubject === subj 
-                    ? 'bg-crhs-navy text-white border-crhs-navy shadow-md scale-105' 
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-crhs-gold hover:text-crhs-navy'
-                }`}
-              >
-                {subj}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dedicated Admission Status Section - Only displayed if active campaign exists in Firestore */}
+        {/* Dedicated Admission Status Section - If active in Firestore */}
         {activeCampaign && activeCampaign.isActive && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-crhs-navy via-slate-900 to-crhs-navy text-white rounded-2xl border-2 border-crhs-gold shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="space-y-2 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest bg-crhs-gold text-crhs-navy px-3 py-1 rounded-full flex items-center gap-1 shadow">
-                  <Sparkles className="w-3.5 h-3.5" /> ADMISSION OPEN
-                </span>
-                <span className="text-xs font-bold text-crhs-gold uppercase tracking-wider">
-                  Academic Session {activeCampaign.academicYear}
-                </span>
+          <ScrollReveal direction="up" delay={0.1} blur={8}>
+            <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-linear-to-r from-crhs-navy via-slate-900 to-crhs-navy text-white rounded-2xl border border-slate-800 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+              <div className="space-y-1.5 max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-crhs-navy px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                    <Sparkles className="w-3 h-3" /> ADMISSION OPEN
+                  </span>
+                  <span className="text-xs font-bold text-amber-300">
+                    Session {activeCampaign.academicYear}
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-black uppercase text-white tracking-wide flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-amber-400 shrink-0" />
+                  <span>{activeCampaign.title}</span>
+                </h2>
+                <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-2">
+                  {activeCampaign.description || `${schoolConfig.schoolName} is currently accepting online application forms for the session.`}
+                </p>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black uppercase text-white tracking-tight flex items-center gap-2">
-                <GraduationCap className="w-6 h-6 text-crhs-gold shrink-0" />
-                {activeCampaign.title}
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-                {activeCampaign.description || `${schoolConfig.schoolName}, ${schoolConfig.location.address} is currently accepting online application forms for the academic session.`}
-              </p>
-              <div className="text-xs font-bold text-slate-300 flex items-center gap-2 pt-1">
-                <Calendar className="w-4 h-4 text-crhs-gold" />
-                <span>Application Window: {activeCampaign.startDate || 'Started'} to {activeCampaign.endDate || 'Ongoing'}</span>
-              </div>
-            </div>
 
-            <Button
-              onClick={() => navigate('/admissions')}
-              className="bg-crhs-gold hover:bg-white text-crhs-navy font-black text-xs uppercase tracking-wider py-3.5 px-6 rounded-xl shadow-md flex items-center justify-center gap-2 shrink-0 w-full md:w-auto"
-            >
-              <span>Apply Online Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
+              <Button
+                onClick={() => navigate('/admissions')}
+                className="bg-amber-500 hover:bg-amber-600 text-crhs-navy font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-full shadow-xs flex items-center justify-center gap-1.5 shrink-0 w-full md:w-auto"
+              >
+                <span>{language === 'hi' ? 'ऑनलाइन आवेदन करें' : 'Apply Online'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </ScrollReveal>
         )}
 
-        {/* Notice List */}
+        {/* Notice List Container */}
         {loading ? (
-          <div className="text-center py-20 flex flex-col items-center justify-center gap-3">
-            <Bell className="w-8 h-8 text-crhs-gold animate-bounce" />
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 animate-pulse">Loading notices & circulars in real time...</p>
-          </div>
+          <ScrollReveal direction="up" blur={8}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5 py-4">
+              {[1, 2, 3, 4].map(n => (
+                <div key={n} className="bg-white rounded-2xl p-5 border border-slate-200 animate-pulse space-y-3">
+                  <div className="flex justify-between">
+                    <div className="h-5 w-20 bg-slate-200 rounded-full"></div>
+                    <div className="h-4 w-24 bg-slate-100 rounded"></div>
+                  </div>
+                  <div className="h-6 w-3/4 bg-slate-200 rounded"></div>
+                  <div className="h-10 w-full bg-slate-100 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
         ) : filteredNotices.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl space-y-3 p-8">
-            <Bell className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-bold uppercase text-crhs-navy">
-              {notices.length === 0 ? "No notices published yet" : "No notices match your filter"}
-            </h3>
-            <p className="text-xs text-slate-500">
-              {notices.length === 0 
-                ? "Official notices and circulars will be displayed here in real time as soon as they are published." 
-                : "Try selecting a different subject or clearing your search phrase."}
-            </p>
-          </div>
+          <ScrollReveal direction="up" blur={8}>
+            <div className="text-center py-12 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-2.5 max-w-md mx-auto shadow-xs">
+              <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200/60">
+                <Bell className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-crhs-navy">
+                {notices.length === 0 
+                  ? (language === 'hi' ? 'अभी कोई सूचना जारी नहीं है' : 'No notices published yet') 
+                  : (language === 'hi' ? 'चयनित श्रेणी में कोई सूचना नहीं मिली' : 'No notices match your filter')}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {notices.length === 0 
+                  ? (language === 'hi' ? 'नई आधिकारिक सूचनाएं जारी होते ही यहां लाइव दिखाई देंगी।' : 'Official announcements will appear here in real time as published.') 
+                  : (language === 'hi' ? 'कृपया अन्य श्रेणी चुनें या सर्च बॉक्स को खाली करें।' : 'Try selecting a different subject or clearing your search phrase.')}
+              </p>
+              {selectedSubject !== 'All' && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setSelectedSubject('All')} 
+                  className="rounded-full text-xs font-bold mt-2"
+                >
+                  {language === 'hi' ? 'सभी सूचनाएं देखें' : 'View All Notices'}
+                </Button>
+              )}
+            </div>
+          </ScrollReveal>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredNotices.map((notice) => (
-              <div
-                key={notice.id}
-                onClick={() => setSelectedNotice(notice)}
-                className={`bg-white border-2 p-6 cursor-pointer hover:border-crhs-navy transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between group ${
-                  notice.isPinned ? 'border-crhs-gold bg-amber-50/20' : 'border-slate-200'
-                }`}
-              >
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-crhs-navy bg-slate-100 px-2.5 py-1 border border-slate-200 group-hover:bg-crhs-navy group-hover:text-white transition-colors">
-                        {notice.type}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+            {filteredNotices.map((notice, idx) => (
+              <ScrollReveal direction="up" delay={idx * 0.06} blur={8} key={notice.id || idx}>
+                <div
+                  onClick={() => setSelectedNotice(notice)}
+                  className={`bg-white rounded-2xl p-4 sm:p-5 cursor-pointer border transition-all duration-300 shadow-xs hover:shadow-md flex flex-col justify-between group ${
+                    notice.isPinned 
+                      ? 'border-amber-300/90 bg-amber-50/20 hover:border-amber-400' 
+                      : 'border-slate-200/80 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="space-y-2.5">
+                    {/* Header Chips & Date */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-crhs-navy bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200/60 group-hover:bg-crhs-navy group-hover:text-white transition-colors">
+                          {notice.type}
+                        </span>
+                        {notice.priority && notice.priority !== 'Normal' && (
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            notice.priority === 'Urgent' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-crhs-navy'
+                          }`}>
+                            {notice.priority}
+                          </span>
+                        )}
+                        {notice.isPinned && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-200/90 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                            <Pin className="w-3 h-3 text-amber-800" />
+                            <span>{language === 'hi' ? 'पिन' : 'Pinned'}</span>
+                          </span>
+                        )}
+                      </div>
+                      
+                      <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> {notice.date}
                       </span>
-                      {notice.priority && notice.priority !== 'Normal' && (
-                        <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 ${
-                          notice.priority === 'Urgent' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
-                        }`}>
-                          {notice.priority}
-                        </span>
-                      )}
-                      {notice.isPinned && (
-                        <span className="text-[10px] font-black uppercase tracking-widest text-crhs-navy bg-crhs-gold px-2.5 py-1 inline-flex items-center gap-1">
-                          <Pin className="w-3 h-3" /> Pinned
-                        </span>
-                      )}
                     </div>
-                    <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" /> {notice.date}
-                    </span>
+
+                    {/* Notice Title */}
+                    <h3 className="text-sm sm:text-base font-black text-crhs-navy leading-snug group-hover:text-amber-600 transition-colors">
+                      {notice.title}
+                    </h3>
+
+                    {/* Notice Details Preview */}
+                    {notice.details && (
+                      <p className="text-xs text-slate-600 font-normal line-clamp-2 leading-relaxed">
+                        {notice.details}
+                      </p>
+                    )}
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-black text-crhs-navy uppercase leading-snug group-hover:text-crhs-gold transition-colors">
-                    {notice.title}
-                  </h3>
-
-                  {notice.details && (
-                    <p className="text-xs text-slate-600 font-medium line-clamp-3 leading-relaxed">
-                      {notice.details}
-                    </p>
-                  )}
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase text-crhs-navy group-hover:text-crhs-gold flex items-center gap-1">
-                    Read Notice <ChevronRight className="w-4 h-4" />
-                  </span>
-
-                  {notice.pdfUrl && (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-rose-600 bg-rose-50 px-2.5 py-1 border border-rose-200">
-                      <FileText className="w-3.5 h-3.5" /> PDF Attached
+                  {/* Card Bottom Row: Action button / PDF */}
+                  <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-600 group-hover:text-amber-700 flex items-center gap-1 text-[11px] sm:text-xs">
+                      <span>{language === 'hi' ? 'पूरा विवरण पढ़ें' : 'Read Notice'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </span>
-                  )}
+
+                    {notice.pdfUrl && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                        <FileText className="w-3 h-3 text-amber-600" />
+                        <span>PDF</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         )}
+
       </div>
 
-      {/* Notice Detail Modal */}
+      {/* Notice Detail Modal - Mobile Optimized with Blur Backdrop */}
       {selectedNotice && (
         <Modal
-          isOpen={!!selectedNotice}
+          isOpen={Boolean(selectedNotice)}
           onClose={() => setSelectedNotice(null)}
-          title="Notice & Circular"
+          title={selectedNotice.title}
         >
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
-              <span className="text-xs font-black uppercase text-crhs-navy bg-slate-100 px-3 py-1 border border-slate-200">
-                {selectedNotice.type}
-              </span>
-              {selectedNotice.priority && (
-                <span className={`text-xs font-black uppercase px-3 py-1 ${
-                  selectedNotice.priority === 'Urgent' ? 'bg-rose-600 text-white' : selectedNotice.priority === 'Important' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {selectedNotice.priority} Priority
+          <div className="space-y-4 text-slate-800">
+            {/* Meta Row */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-crhs-navy font-bold text-[11px] border border-slate-200">
+                  {selectedNotice.type}
                 </span>
-              )}
-              <span className="text-xs font-bold text-slate-500 ml-auto flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" /> Published: {selectedNotice.date}
+                {selectedNotice.priority && selectedNotice.priority !== 'Normal' && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    selectedNotice.priority === 'Urgent' ? 'bg-rose-500 text-white' : 'bg-amber-400 text-crhs-navy'
+                  }`}>
+                    {selectedNotice.priority}
+                  </span>
+                )}
+              </div>
+              <span className="text-slate-400 font-medium flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> {selectedNotice.date}
               </span>
             </div>
 
-            <h3 className="text-xl font-black text-crhs-navy uppercase leading-snug">
-              {selectedNotice.title}
-            </h3>
+            {/* Notice Details Content */}
+            <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line py-2">
+              {selectedNotice.details || (language === 'hi' ? 'विस्तृत परिपत्र कार्यालय में उपलब्ध है।' : 'Details available at center administration desk.')}
+            </div>
 
-            {selectedNotice.details && (
-              <div className="p-4 bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-line">
-                {selectedNotice.details}
-              </div>
-            )}
-
+            {/* Attached PDF / Document Download if present */}
             {selectedNotice.pdfUrl && (
-              <div className="p-4 bg-crhs-navy/5 border-2 border-crhs-navy/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-rose-600 shrink-0" />
-                  <div>
-                    <h4 className="font-black text-xs uppercase text-crhs-navy">Official PDF Circular Document</h4>
-                    <p className="text-[11px] font-semibold text-slate-500 truncate max-w-[220px]">
-                      {selectedNotice.pdfName || 'Official Attached PDF'}
-                    </p>
-                  </div>
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-5 h-5 text-amber-600 shrink-0" />
+                  <span className="text-xs font-bold text-amber-900 truncate">
+                    {selectedNotice.pdfName || 'Official Circular Document.pdf'}
+                  </span>
                 </div>
-
                 <a
                   href={selectedNotice.pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-crhs-navy text-white hover:bg-crhs-gold hover:text-crhs-navy text-xs font-black uppercase tracking-wider transition-colors shrink-0"
+                  className="px-3 py-1.5 bg-crhs-navy text-white text-xs font-bold rounded-lg hover:bg-slate-900 shrink-0 flex items-center gap-1 shadow-2xs"
                 >
-                  <Download className="w-4 h-4" /> View / Download PDF
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{language === 'hi' ? 'डाउनलोड' : 'Download'}</span>
                 </a>
               </div>
             )}
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
-              <Button onClick={() => setSelectedNotice(null)} variant="outline" size="sm">
-                Close
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                {schoolConfig.schoolName}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedNotice(null)}
+                className="rounded-full text-xs font-bold"
+              >
+                {language === 'hi' ? 'बंद करें' : 'Close'}
               </Button>
             </div>
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 }

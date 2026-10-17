@@ -124,9 +124,9 @@ export function Home() {
       <ProgramsOverview />
 
       {/* News & Principal Message */}
-      <section className="py-16 md:py-24 bg-slate-50 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      <section className="py-10 sm:py-16 md:py-24 bg-slate-50 relative">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
             
             <div className="lg:col-span-8 flex flex-col">
               <ScrollReveal direction="right" delay={0.2} className="h-full">
@@ -135,7 +135,7 @@ export function Home() {
             </div>
             
             <div className="lg:col-span-4 flex flex-col">
-              <ScrollReveal direction="left" delay={0.4} className="h-full">
+              <ScrollReveal direction="left" delay={0.3} className="h-full">
                 <PrincipalMessage />
               </ScrollReveal>
             </div>

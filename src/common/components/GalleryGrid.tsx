@@ -55,18 +55,17 @@ export function GalleryGrid() {
 
   return (
     <div itemScope itemType="https://schema.org/ImageGallery">
-      {/* Category Filter */}
-      <div className="flex flex-wrap justify-center gap-2.5 mb-12">
+      {/* Category Filter Pills - Compact, Rounded-Full & Mobile-Friendly */}
+      <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-8 sm:mb-10 px-1">
         {dynamicCategories.map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCat(cat)}
             className={cn(
-              "px-4 py-2 text-xs font-black uppercase tracking-widest transition-all border-2",
-              getRadiusClass(),
+              "px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-200 shrink-0 whitespace-nowrap active:scale-95",
               activeCat === cat 
-                ? "border-crhs-navy bg-crhs-navy text-white shadow-md scale-105" 
-                : "border-slate-200 bg-white text-slate-600 hover:border-crhs-gold hover:text-crhs-navy"
+                ? "border border-crhs-navy bg-crhs-navy text-white shadow-xs ring-1 sm:ring-2 ring-crhs-navy/15" 
+                : "border border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-crhs-navy shadow-2xs"
             )}
           >
             {cat}
@@ -76,36 +75,42 @@ export function GalleryGrid() {
 
       {/* Loading State */}
       {loading && (
-        <div className="text-center text-slate-500 py-12">Loading gallery...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6 py-6">
+          {[1, 2, 3].map(n => (
+            <div key={n} className="aspect-[4/3] rounded-2xl bg-white border border-slate-200 animate-pulse flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-slate-100" />
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Empty State */}
       {!loading && filtered.length === 0 && (
-        <div className="text-center text-slate-500 py-12">No images found for this category.</div>
+        <div className="text-center text-slate-500 py-12 bg-white rounded-2xl border border-slate-200 p-8">
+          <p className="text-sm font-bold text-crhs-navy">No images found for this category.</p>
+          <p className="text-xs text-slate-400 mt-1">Switch to 'All' to view other campus photos.</p>
+        </div>
       )}
 
       {/* Image Grid */}
       <motion.div 
         layout 
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6"
       >
         <AnimatePresence>
           {filtered.map(img => (
             <motion.figure
               layout
-              initial={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
               animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              exit={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
+              transition={{ duration: 0.35, ease: [0.21, 0.47, 0.32, 0.98] }}
               key={img.id}
               itemProp="image" 
               itemScope 
               itemType="https://schema.org/ImageObject"
               onClick={() => setSelectedImage(img)}
-              className={cn(
-                "relative m-0 aspect-[4/3] overflow-hidden group border border-slate-200 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300",
-                getRadiusClass()
-              )}
+              className="relative m-0 aspect-[4/3] overflow-hidden group rounded-2xl border border-slate-200/80 cursor-pointer shadow-xs hover:shadow-md transition-all duration-300 bg-slate-100"
             >
               <meta itemProp="name" content={img.title || `${schoolConfig.schoolName} Gallery Image`} />
               <meta itemProp="description" content={img.desc || `A picture from ${schoolConfig.schoolName} campus.`} />

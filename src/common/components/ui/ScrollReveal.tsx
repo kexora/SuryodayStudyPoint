@@ -5,10 +5,11 @@ import { cn } from '@/lib/utils';
 export interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
-  direction?: 'up' | 'down' | 'left' | 'right' | 'none'; // kept for compatibility but ignored
+  direction?: 'up' | 'down' | 'left' | 'right' | 'none';
   delay?: number;
   duration?: number;
   distance?: number;
+  blur?: number;
   key?: string | number;
 }
 
@@ -18,26 +19,49 @@ export function ScrollReveal({
   direction = 'up',
   delay = 0,
   duration = 0.6,
-  distance = 40,
+  distance = 30,
+  blur = 8,
 }: ScrollRevealProps) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-20px" });
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-10px" });
 
+  let x = 0;
   let y = 0;
-  // Always slide from bottom, except when none
-  if (direction !== 'none') {
+
+  if (direction === 'up') {
     y = distance;
+  } else if (direction === 'down') {
+    y = -distance;
+  } else if (direction === 'left') {
+    x = distance;
+  } else if (direction === 'right') {
+    x = -distance;
   }
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y, filter: 'blur(8px)' }}
-      animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y, filter: 'blur(8px)' }}
+      initial={{ 
+        opacity: 0, 
+        x, 
+        y, 
+        filter: `blur(${blur}px)` 
+      }}
+      animate={isInView ? { 
+        opacity: 1, 
+        x: 0, 
+        y: 0, 
+        filter: 'blur(0px)' 
+      } : { 
+        opacity: 0, 
+        x, 
+        y, 
+        filter: `blur(${blur}px)` 
+      }}
       transition={{
         duration,
         delay,
-        ease: 'easeOut'
+        ease: [0.21, 0.47, 0.32, 0.98]
       }}
       className={cn(className)}
     >

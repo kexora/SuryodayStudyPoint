@@ -1,35 +1,72 @@
 import React from 'react';
-
 import { useLanguage } from '@/context/LanguageContext';
+import { Quote, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function PrincipalMessage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
-    <div className="bg-crhs-navy text-white p-8 sm:p-10 relative overflow-hidden flex flex-col gap-8 h-full justify-center border-t-4 border-amber-500">
-      <div className="relative z-10 flex flex-col gap-6">
-        <div className="flex gap-5 items-center">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white flex-none rounded-full overflow-hidden relative border-4 border-amber-400 shadow-lg">
+    <div className="flex flex-col h-full w-full bg-white p-6 sm:p-8 shadow-sm border border-gray-100 justify-between">
+      
+      <div>
+        {/* Header - Matches NoticeBoard Title Style */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-crhs-navy font-black text-lg uppercase tracking-widest border-l-4 border-amber-500 pl-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            {t('director.title')}
+          </h3>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+            {language === 'hi' ? 'निदेशक का संदेश' : 'Director Desk'}
+          </span>
+        </div>
+
+        {/* Director Profile - Clean and Simple */}
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-amber-400 shrink-0 shadow-xs">
             <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" 
-              alt="Director, Suryoday Study Point" 
-              className="w-full h-full object-cover"
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256" 
+              alt={language === 'hi' ? 'इंजीनियर आलोक कुमार' : 'Er. Alok Kumar'} 
+              className="w-full h-full object-cover object-top"
+              loading="lazy"
             />
           </div>
-          <div>
-            <p className="text-[11px] sm:text-xs font-black text-amber-400 uppercase tracking-widest mb-1 sm:mb-2">{t('director.title')}</p>
-            <p className="text-lg sm:text-xl font-bold tracking-tight">{t('director.name')}</p>
-            <p className="text-xs text-slate-300 font-medium">{t('director.sub')}</p>
+          <div className="min-w-0">
+            <h4 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+              <span>{t('director.name')}</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            </h4>
+            <p className="text-xs font-bold text-amber-600 truncate mt-0.5">
+              {t('director.sub')}
+            </p>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+              {language === 'hi' ? 'बी.टेक • मुख्य शैक्षणिक मेंटर' : 'B.Tech • Senior Academic Mentor'}
+            </p>
           </div>
         </div>
-        <div className="relative">
-          <span className="text-amber-400 text-5xl absolute -top-4 -left-3 sm:-left-6 opacity-30 leading-none font-serif">"</span>
-          <p className="text-sm sm:text-base italic leading-relaxed opacity-90 relative z-10 pl-4 sm:pl-0">
-            {t('director.quote')}
+
+        {/* Message Quote - Clean Typography with Amber Left Accent */}
+        <div className="relative pl-4 border-l-2 border-amber-400 py-1 mb-6">
+          <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed font-normal">
+            "{t('director.quote')}"
           </p>
         </div>
       </div>
-      <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-white/5 rotate-45 z-0"></div>
+
+      {/* Footer Signature & Link */}
+      <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+        <span className="font-mono font-bold text-slate-800 text-[11px]">
+          ~ Er. Alok Kumar
+        </span>
+        <Link 
+          to="/about" 
+          className="text-amber-600 hover:text-amber-700 font-bold text-[11px] flex items-center gap-1 hover:underline"
+        >
+          <span>{language === 'hi' ? 'संस्थान के बारे में पढ़ें' : 'Read More'}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
     </div>
   );
 }
