@@ -8,7 +8,6 @@ import {
   Phone, 
   CheckCircle2, 
   X, 
-  Mail, 
   BookOpen
 } from 'lucide-react';
 import { 
@@ -37,7 +36,7 @@ export function LoginForm() {
   const { refreshUserData } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [errorDetails, setErrorDetails] = useState<{ title: string; desc: string; isUnauthorizedDomain?: boolean } | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{ title: string; desc: string } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Profile Completion Modal State (when signup is incomplete or new)
@@ -52,13 +51,6 @@ export function LoginForm() {
   });
   const [completionLoading, setCompletionLoading] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
-
-  // Direct Google Fallback Modal State (for popup blocked)
-  const [showDirectModal, setShowDirectModal] = useState(false);
-  const [directEmail, setDirectEmail] = useState('');
-  const [directName, setDirectName] = useState('');
-  const [directLoading, setDirectLoading] = useState(false);
-  const [directError, setDirectError] = useState<string | null>(null);
 
   const isSuperAdminEmail = (email: string) => {
     const clean = (email || '').toLowerCase().trim();
@@ -176,8 +168,11 @@ export function LoginForm() {
           title: language === 'hi' ? 'गूगल साइन-इन रद्द' : 'Google Sign-In Cancelled',
           desc: language === 'hi' ? 'गूगल लॉगिन विंडो पूरी होने से पहले बंद कर दी गई।' : 'Sign-in popup was closed before completion.'
         });
-      } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/unauthorized-domain' || err?.message?.includes('popup-blocked')) {
-        setShowDirectModal(true);
+      } else if (err.code === 'auth/popup-blocked') {
+        setErrorDetails({
+          title: language === 'hi' ? 'पॉपअप ब्लॉक हुआ' : 'Popup Blocked',
+          desc: language === 'hi' ? 'ब्राउज़र ने पॉपअप ब्लॉक कर दिया है। कृपया पॉपअप की अनुमति दें।' : 'Browser blocked the popup window. Please allow popups.'
+        });
       } else {
         setErrorDetails({
           title: language === 'hi' ? 'प्रमाणीकरण में त्रुटि' : 'Authentication Error',
@@ -240,68 +235,6 @@ export function LoginForm() {
     }
   };
 
-  // Direct Google Fallback Login (Database Role Check)
-  const handleDirectGoogleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setDirectError(null);
-
-    const cleanEmail = directEmail.trim().toLowerCase();
-    const cleanName = directName.trim() || cleanEmail.split('@')[0];
-
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setDirectError(language === 'hi' ? 'कृपया एक मान्य ईमेल दर्ज करें।' : 'Please enter a valid email address.');
-      return;
-    }
-
-    setDirectLoading(true);
-
-    try {
-      const isAdminEmail = isSuperAdminEmail(cleanEmail);
-      const studentId = 'SSP-' + generateCrhsId();
-
-      let dbRole = isAdminEmail ? '__kx_0x1' : '__kx_0x4';
-
-      const userProfile = {
-        uid: 'google-' + Math.random().toString(36).substring(2, 11),
-        role: dbRole,
-        email: cleanEmail,
-        fullName: cleanName,
-        name: cleanName,
-        crhsId: studentId,
-        studentId: studentId,
-        signupCompleted: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem('secure_user_data', encryptData(userProfile));
-
-      try {
-        await withTimeout(setDoc(doc(db, 'users', userProfile.uid), userProfile, { merge: true }), 3000);
-      } catch (e) {
-        console.warn("Firestore sync warning:", e);
-      }
-
-      setSuccessMessage(
-        language === 'hi' 
-          ? `लॉगिन सफल! स्वागत है, ${cleanName}` 
-          : `Signed in as ${cleanName}!`
-      );
-      setShowDirectModal(false);
-
-      const targetRoute = (dbRole === '__kx_0x1' || dbRole === '__kx_0x2') ? '/admin' : '/dashboard';
-
-      setTimeout(() => {
-        refreshUserData();
-        window.location.href = targetRoute;
-      }, 500);
-
-    } catch (err: any) {
-      setDirectError(err.message || 'Login failed.');
-    } finally {
-      setDirectLoading(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-md mx-auto">
       <ScrollReveal direction="up" delay={0.05} blur={10}>
@@ -337,19 +270,6 @@ export function LoginForm() {
                 <p className="text-rose-700 leading-relaxed text-[11px]">
                   {errorDetails.desc}
                 </p>
-                {errorDetails.isUnauthorizedDomain && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setErrorDetails(null);
-                      setShowDirectModal(true);
-                    }}
-                    className="mt-2 w-full py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{language === 'hi' ? 'डायरेक्ट गूगल लॉगिन का उपयोग करें' : 'Use Direct Google Sign-In'}</span>
-                  </button>
-                )}
               </div>
             )}
 
@@ -361,7 +281,7 @@ export function LoginForm() {
               </div>
             )}
 
-            {/* Google Sign-In Button Only */}
+            {/* Clean Google Sign-In Button Only */}
             <div className="space-y-3 mb-6">
               <button
                 type="button"
@@ -395,22 +315,6 @@ export function LoginForm() {
                   {language === 'hi' ? 'गूगल से साइन इन करें (Sign in with Google)' : 'Sign in with Google'}
                 </span>
               </button>
-
-              {/* Direct Google Sign-In Fallback Link */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowDirectModal(true)}
-                  className="text-xs text-amber-700 hover:text-amber-900 font-semibold inline-flex items-center gap-1 hover:underline py-1"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-500" />
-                  <span>
-                    {language === 'hi' 
-                      ? 'पॉपअप समस्या? डायरेक्ट गूगल लॉगिन करें' 
-                      : 'Popup blocked? Use Direct Google Sign-In'}
-                  </span>
-                </button>
-              </div>
             </div>
 
             {/* Helpline Footer */}
@@ -515,86 +419,6 @@ export function LoginForm() {
                 ) : (
                   <>
                     <span>{language === 'hi' ? 'पंजीकरण पूर्ण करें और आगे बढ़ें' : 'Complete Registration & Continue'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Direct Google Fallback Modal */}
-      {showDirectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 relative animate-scale-up">
-            <button
-              type="button"
-              onClick={() => setShowDirectModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-3">
-                <Mail className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">
-                {language === 'hi' ? 'डायरेक्ट गूगल साइन-इन' : 'Direct Google Sign-In'}
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                {language === 'hi' 
-                  ? 'अपना गूगल ईमेल दर्ज करें और तुरंत प्रवेश करें।' 
-                  : 'Enter your Google email to sign in directly.'}
-              </p>
-            </div>
-
-            {directError && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{directError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleDirectGoogleLogin} className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'hi' ? 'गूगल ईमेल (Google Email) *' : 'Google Email *'}
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="student@gmail.com"
-                  value={directEmail}
-                  onChange={(e) => setDirectEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-xs sm:text-sm outline-hidden transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'hi' ? 'पूरा नाम (Full Name)' : 'Full Name'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={language === 'hi' ? 'उदा. राहुल कुमार' : 'e.g. Rahul Kumar'}
-                  value={directName}
-                  onChange={(e) => setDirectName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-xs sm:text-sm outline-hidden transition-all"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={directLoading}
-                className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {directLoading ? (
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <span>{language === 'hi' ? 'लॉगिन करें' : 'Sign In'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
